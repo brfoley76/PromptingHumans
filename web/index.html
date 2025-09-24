@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Module - Pirate Vocabulary</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>Pirate Vocabulary Adventure</h1>
+            <p class="subtitle">3rd Grade Reading Exercise</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Start Screen -->
+            <div id="startScreen" class="screen active">
+                <div class="welcome-card">
+                    <h2>Welcome to the Multiple Choice Exercise!</h2>
+                    <p>Test your knowledge of pirate vocabulary words.</p>
+                    
+                    <div class="settings">
+                        <label for="numQuestions">Number of Questions:</label>
+                        <select id="numQuestions">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                            <option value="20">20 Questions</option>
+                        </select>
+                        
+                        <label for="difficulty">Difficulty:</label>
+                        <select id="difficulty">
+                            <option value="3">Easy (3 choices)</option>
+                            <option value="4" selected>Medium (4 choices)</option>
+                            <option value="5">Hard (5 choices)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="startBtn" class="btn btn-primary">Start Exercise</button>
+                </div>
+            </div>
+
+            <!-- Exercise Screen -->
+            <div id="exerciseScreen" class="screen">
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span></span>
+                        <span>Score: <span id="score">0</span></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Question Card -->
+                <div class="question-card">
+                    <h2 class="question-text" id="questionText">
+                        <!-- Question will be inserted here -->
+                    </h2>
+                    
+                    <div id="answerOptions" class="answer-options">
+                        <!-- Radio button options will be inserted here -->
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="submitBtn" class="btn btn-primary" disabled>Submit Answer</button>
+                        <button id="nextBtn" class="btn btn-secondary" style="display: none;">Next Question</button>
+                    </div>
+                    
+                    <div id="feedback" class="feedback" style="display: none;">
+                        <!-- Feedback will be shown here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="resultsScreen" class="screen">
+                <div class="results-card">
+                    <h2>Great Job! 🎉</h2>
+                    <div class="results-content">
+                        <div class="score-display">
+                            <p class="final-score">Your Score: <span id="finalScore">0</span> / <span id="finalTotal">10</span></p>
+                            <p class="percentage" id="percentage">0%</p>
+                        </div>
+                        
+                        <div class="results-message" id="resultsMessage">
+                            <!-- Encouraging message will be inserted here -->
+                        </div>
+                        
+                        <div class="results-summary">
+                            <h3>Summary</h3>
+                            <ul id="resultsSummary">
+                                <!-- Summary of answers will be inserted here -->
+                            </ul>
+                        </div>
+                        
+                        <button id="restartBtn" class="btn btn-primary">Try Again</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Learning Module - Educational Platform</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/curriculum.js"></script>
+    <script src="js/multipleChoice.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

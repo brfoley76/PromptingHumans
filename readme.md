@@ -76,12 +76,15 @@ Background should be white, and the text dark blue unless otherwise indicated
     * `tau` tortuosity
     * `mastery ` the student's mastery score of the vocabulary
     * `p` proportion of words spelled correctly
+* Assets:
+    * a png image of a bubble, with a transparent background
 * from the vocabulary content choose a random set of words
 * the background of the screen can be any random light color
 * along the top there is a timer, and a speed, and a "right", "wrong", "missed" counter
 * words move into the screen from right to left
-    * they are enclosed in bubbles
     * they randomly vary in font size and color, but always larger than 14pt, and always dark
+    * they are each superimposed and centered on a bubble
+        * the bubble is sized to completely hold the word
     * they move with a random speed proportional to `v`
     * as they move right to left, they also move up or down in the screen, changing direction stochastically, with the frequency and magnitude of changes proportional to `tau`
     * if they occupy the same space, the larger size word will be "in front". 
@@ -94,3 +97,16 @@ Background should be white, and the text dark blue unless otherwise indicated
     * if they don't click on it before it passes from the screen, the "missed" score increments.
 * the game continues until the timer runs out (between 1 and 3 minutes)
 
+### Reading exercise: speed reading
+* arguments
+    * `curriculum.content.narrative`: 
+    * `variant`: currently either `spelling` or `vocab`
+    * `mastery ` the student's mastery score of the vocabulary
+* The view of this game should have three main zones.
+    * along the top is a board with a timer, a score, and a percent completed
+    * in the center is a view that will contain the main narrative, as it is completed, formatted to look like a page in a book
+    * along the bottom, there is text, streaming 
+* There is a canonical version of the narrative, it is organised in an ordered dictionary of text fragments.
+* the text fragments should scroll in, right to left, joined together in a continuous stream, respecting spaces
+    * paragraphs `\n\n` should be separated by 4 spaces
+* 
