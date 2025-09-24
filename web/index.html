@@ -12,67 +12,252 @@
         <header class="header">
             <h1>Pirate Vocabulary Adventure</h1>
             <p class="subtitle">3rd Grade Reading Exercise</p>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <span class="user-name">Welcome, <strong id="userName"></strong></span>
+                <span class="student-id">ID: <span id="studentId"></span></span>
+            </div>
         </header>
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Start Screen -->
-            <div id="startScreen" class="screen active">
-                <div class="welcome-card">
-                    <h2>Welcome to the Multiple Choice Exercise!</h2>
-                    <p>Test your knowledge of pirate vocabulary words.</p>
+            <!-- Registration Screen -->
+            <div id="registrationScreen" class="screen">
+                <div class="registration-card">
+                    <h2>Welcome to the Learning Module!</h2>
+                    <p>Let's get started by telling us your name.</p>
                     
+                    <div class="registration-form">
+                        <label for="studentName">What's your name?</label>
+                        <input type="text" id="studentName" placeholder="Enter your name" maxlength="50">
+                        <button id="registerBtn" class="btn btn-primary" disabled>Start Learning</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise Selection Screen -->
+            <div id="selectionScreen" class="screen">
+                <h2 class="section-title">Choose Your Exercise</h2>
+                <div class="exercise-grid">
+                    <!-- Multiple Choice Card -->
+                    <div class="exercise-card" data-exercise="multiple_choice">
+                        <div class="exercise-header">
+                            <h3>Multiple Choice</h3>
+                            <span class="difficulty-badge easy">Easy</span>
+                        </div>
+                        <p class="exercise-description">Match definitions with the correct vocabulary words.</p>
+                        <div class="exercise-scores"></div>
+                        <button class="btn btn-exercise" data-exercise-btn="multiple_choice">Play</button>
+                    </div>
+
+                    <!-- Fill in the Blank Card -->
+                    <div class="exercise-card" data-exercise="fill_in_the_blank">
+                        <div class="exercise-header">
+                            <h3>Fill in the Blank</h3>
+                            <span class="difficulty-badge easy">Easy</span>
+                        </div>
+                        <p class="exercise-description">Drag words to complete the definitions.</p>
+                        <div class="exercise-scores"></div>
+                        <button class="btn btn-exercise" data-exercise-btn="fill_in_the_blank">Play</button>
+                    </div>
+
+                    <!-- Spelling Card -->
+                    <div class="exercise-card locked" data-exercise="spelling">
+                        <div class="exercise-header">
+                            <h3>Spelling</h3>
+                            <span class="difficulty-badge medium">Medium</span>
+                        </div>
+                        <p class="exercise-description">Type the correct spelling of vocabulary words.</p>
+                        <div class="exercise-scores"></div>
+                        <div class="lock-overlay">
+                            <span class="lock-icon">🔒</span>
+                            <p>Score 80%+ on Fill-in-Blank (Moderate) to unlock</p>
+                        </div>
+                        <button class="btn btn-exercise" data-exercise-btn="spelling" disabled>Locked</button>
+                    </div>
+
+                    <!-- More exercises can be added here -->
+                </div>
+            </div>
+
+            <!-- Multiple Choice Exercise Screen -->
+            <div id="multipleChoiceScreen" class="screen">
+                <!-- Exercise Settings -->
+                <div id="mcSettingsPanel" class="settings-panel">
+                    <h2>Multiple Choice Exercise</h2>
                     <div class="settings">
-                        <label for="numQuestions">Number of Questions:</label>
-                        <select id="numQuestions">
+                        <label for="mcNumQuestions">Number of Questions:</label>
+                        <select id="mcNumQuestions">
                             <option value="5">5 Questions</option>
                             <option value="10" selected>10 Questions</option>
                             <option value="15">15 Questions</option>
                             <option value="20">20 Questions</option>
                         </select>
                         
-                        <label for="difficulty">Difficulty:</label>
-                        <select id="difficulty">
+                        <label for="mcDifficulty">Difficulty:</label>
+                        <select id="mcDifficulty">
                             <option value="3">Easy (3 choices)</option>
                             <option value="4" selected>Medium (4 choices)</option>
                             <option value="5">Hard (5 choices)</option>
                         </select>
                     </div>
-                    
-                    <button id="startBtn" class="btn btn-primary">Start Exercise</button>
+                    <div class="button-group">
+                        <button id="mcBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="mcStartBtn" class="btn btn-primary">Start Exercise</button>
+                    </div>
+                </div>
+
+                <!-- Exercise Content -->
+                <div id="mcExercisePanel" class="exercise-panel" style="display: none;">
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>Question <span id="mcCurrentQuestion">1</span> of <span id="mcTotalQuestions">10</span></span>
+                            <span>Score: <span id="mcScore">0</span></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="mcProgressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Question Card -->
+                    <div class="question-card">
+                        <h2 class="question-text" id="mcQuestionText">
+                            <!-- Question will be inserted here -->
+                        </h2>
+                        
+                        <div id="mcAnswerOptions" class="answer-options">
+                            <!-- Radio button options will be inserted here -->
+                        </div>
+                        
+                        <div class="button-group">
+                            <button id="mcSubmitBtn" class="btn btn-primary" disabled>Submit Answer</button>
+                            <button id="mcNextBtn" class="btn btn-secondary" style="display: none;">Next Question</button>
+                        </div>
+                        
+                        <div id="mcFeedback" class="feedback" style="display: none;">
+                            <!-- Feedback will be shown here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Exercise Screen -->
-            <div id="exerciseScreen" class="screen">
-                <!-- Progress Bar -->
-                <div class="progress-container">
-                    <div class="progress-info">
-                        <span>Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span></span>
-                        <span>Score: <span id="score">0</span></span>
+            <!-- Fill in the Blank Exercise Screen -->
+            <div id="fillInBlankScreen" class="screen">
+                <!-- Exercise Settings -->
+                <div id="fibSettingsPanel" class="settings-panel">
+                    <h2>Fill in the Blank Exercise</h2>
+                    <div class="settings">
+                        <label for="fibNumQuestions">Number of Questions:</label>
+                        <select id="fibNumQuestions">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                        </select>
+                        
+                        <label for="fibDifficulty">Difficulty:</label>
+                        <select id="fibDifficulty">
+                            <option value="easy">Easy (Only needed words)</option>
+                            <option value="moderate">Moderate (All vocabulary)</option>
+                        </select>
                     </div>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
+                    <div class="button-group">
+                        <button id="fibBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="fibStartBtn" class="btn btn-primary">Start Exercise</button>
                     </div>
                 </div>
 
-                <!-- Question Card -->
-                <div class="question-card">
-                    <h2 class="question-text" id="questionText">
-                        <!-- Question will be inserted here -->
-                    </h2>
-                    
-                    <div id="answerOptions" class="answer-options">
-                        <!-- Radio button options will be inserted here -->
+                <!-- Exercise Content -->
+                <div id="fibExercisePanel" class="exercise-panel" style="display: none;">
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>Filled: <span id="fibFilled">0</span> of <span id="fibTotal">10</span></span>
+                            <span>Progress: <span id="fibProgress">0</span>%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="fibProgressFill" class="progress-fill"></div>
+                        </div>
                     </div>
-                    
+
+                    <!-- Word Bank -->
+                    <div class="word-bank-container">
+                        <h3>Word Bank</h3>
+                        <div id="wordBank" class="word-bank">
+                            <!-- Draggable words will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Questions -->
+                    <div id="fibQuestions" class="fib-questions">
+                        <!-- Fill in the blank questions will be inserted here -->
+                    </div>
+
+                    <!-- Submit Button -->
                     <div class="button-group">
-                        <button id="submitBtn" class="btn btn-primary" disabled>Submit Answer</button>
-                        <button id="nextBtn" class="btn btn-secondary" style="display: none;">Next Question</button>
+                        <button id="fibCheckBtn" class="btn btn-primary" disabled>Check Answers</button>
                     </div>
-                    
-                    <div id="feedback" class="feedback" style="display: none;">
-                        <!-- Feedback will be shown here -->
+                </div>
+            </div>
+
+            <!-- Spelling Exercise Screen -->
+            <div id="spellingScreen" class="screen">
+                <!-- Exercise Settings -->
+                <div id="spSettingsPanel" class="settings-panel">
+                    <h2>Spelling Exercise</h2>
+                    <div class="settings">
+                        <label for="spNumQuestions">Number of Questions:</label>
+                        <select id="spNumQuestions">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                            <option value="20">20 Questions</option>
+                        </select>
+                        
+                        <label for="spDifficulty">Difficulty:</label>
+                        <select id="spDifficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="spBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="spStartBtn" class="btn btn-primary">Start Exercise</button>
+                    </div>
+                </div>
+
+                <!-- Exercise Content -->
+                <div id="spExercisePanel" class="exercise-panel" style="display: none;">
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>Question <span id="spCurrentQuestion">1</span> of <span id="spTotalQuestions">10</span></span>
+                            <span>Score: <span id="spScore">0</span></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="spProgressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Question Card -->
+                    <div class="question-card">
+                        <h2 class="question-text" id="spQuestionText">
+                            <!-- Definition will be inserted here -->
+                        </h2>
+                        
+                        <div class="spelling-input-container">
+                            <input type="text" id="spAnswerInput" class="spelling-input" placeholder="Type your answer here" autocomplete="off">
+                            <div id="spInputFeedback" class="input-feedback"></div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button id="spSubmitBtn" class="btn btn-primary">Submit Answer</button>
+                            <button id="spNextBtn" class="btn btn-secondary" style="display: none;">Next Question</button>
+                        </div>
+                        
+                        <div id="spFeedback" class="feedback" style="display: none;">
+                            <!-- Feedback will be shown here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,7 +265,7 @@
             <!-- Results Screen -->
             <div id="resultsScreen" class="screen">
                 <div class="results-card">
-                    <h2>Great Job! 🎉</h2>
+                    <h2 id="resultsTitle">Great Job! 🎉</h2>
                     <div class="results-content">
                         <div class="score-display">
                             <p class="final-score">Your Score: <span id="finalScore">0</span> / <span id="finalTotal">10</span></p>
@@ -98,7 +283,10 @@
                             </ul>
                         </div>
                         
-                        <button id="restartBtn" class="btn btn-primary">Try Again</button>
+                        <div class="button-group">
+                            <button id="menuBtn" class="btn btn-secondary">Back to Menu</button>
+                            <button id="retryBtn" class="btn btn-primary">Try Again</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,7 +300,10 @@
 
     <!-- JavaScript Files -->
     <script src="js/curriculum.js"></script>
+    <script src="js/scoreManager.js"></script>
     <script src="js/multipleChoice.js"></script>
+    <script src="js/fillInBlank.js"></script>
+    <script src="js/spellingExercise.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
