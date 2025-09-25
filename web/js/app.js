@@ -26,6 +26,10 @@ class App {
         this.fillInBlankExercise = new FillInBlankExercise(this.curriculumManager);
         this.spellingExercise = new SpellingExercise(this.curriculumManager);
         
+        // Initialize Bubble Pop game
+        this.bubblePopExercise = new BubblePopExercise(this.curriculumManager);
+        this.bubblePopUI = new BubblePopUI(this, this.bubblePopExercise);
+        
         this.currentExercise = null;
         this.currentExerciseType = null;
         this.selectedAnswer = null;
@@ -421,6 +425,10 @@ class App {
             this.showScreen('spellingScreen');
             document.getElementById('spSettingsPanel').style.display = 'block';
             document.getElementById('spExercisePanel').style.display = 'none';
+        } else if (exerciseType === 'bubble_pop') {
+            this.showScreen('bubblePopScreen');
+            this.bubblePopUI.initialize();
+            this.bubblePopUI.show();
         }
     }
 

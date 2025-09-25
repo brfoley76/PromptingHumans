@@ -75,6 +75,21 @@
                         <button class="btn btn-exercise" data-exercise-btn="spelling" disabled>Locked</button>
                     </div>
 
+                    <!-- Bubble Pop Card -->
+                    <div class="exercise-card locked" data-exercise="bubble_pop">
+                        <div class="exercise-header">
+                            <h3>Bubble Pop</h3>
+                            <span class="difficulty-badge hard">Hard</span>
+                        </div>
+                        <p class="exercise-description">Click on bubbles with correct or incorrect spelling.</p>
+                        <div class="exercise-scores"></div>
+                        <div class="lock-overlay">
+                            <span class="lock-icon">🔒</span>
+                            <p>Score 80%+ on Spelling (Hard) to unlock</p>
+                        </div>
+                        <button class="btn btn-exercise" data-exercise-btn="bubble_pop" disabled>Locked</button>
+                    </div>
+
                     <!-- More exercises can be added here -->
                 </div>
             </div>
@@ -262,6 +277,117 @@
                 </div>
             </div>
 
+            <!-- Bubble Pop Game Screen -->
+            <div id="bubblePopScreen" class="screen">
+                <!-- Exercise Settings -->
+                <div id="bpSettingsPanel" class="settings-panel">
+                    <h2>Bubble Pop Game</h2>
+                    <div class="settings">
+                        <label for="bpDuration">Duration:</label>
+                        <select id="bpDuration">
+                            <option value="60">1 minute</option>
+                            <option value="120">2 minutes</option>
+                            <option value="180">3 minutes</option>
+                        </select>
+                        
+                        <label for="bpSpeed">Speed: <span id="bpSpeedValue">50</span></label>
+                        <input type="range" id="bpSpeed" min="0" max="100" value="50" 
+                               oninput="document.getElementById('bpSpeedValue').textContent = this.value">
+                        
+                        <label for="bpTortuosity">Movement: <span id="bpTortuosityValue">50</span></label>
+                        <input type="range" id="bpTortuosity" min="0" max="100" value="50"
+                               oninput="document.getElementById('bpTortuosityValue').textContent = this.value">
+                        
+                        <label for="bpErrorRate">Spelling Errors: <span id="bpErrorRateValue">30%</span></label>
+                        <input type="range" id="bpErrorRate" min="0" max="100" value="30"
+                               oninput="document.getElementById('bpErrorRateValue').textContent = this.value + '%'">
+                    </div>
+                    <div class="button-group">
+                        <button id="bpBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="bpInstructionsBtn" class="btn btn-info">Instructions</button>
+                        <button id="bpStartBtn" class="btn btn-primary">Start Game</button>
+                    </div>
+                </div>
+
+                <!-- Game Panel -->
+                <div id="bpGamePanel" class="game-panel" style="display: none;">
+                    <!-- Game Header -->
+                    <div class="game-header">
+                        <div class="game-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Time:</span>
+                                <span id="bpTimeRemaining" class="stat-value">1:00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Right:</span>
+                                <span id="bpScoreRight" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Wrong:</span>
+                                <span id="bpScoreWrong" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Missed:</span>
+                                <span id="bpScoreMissed" class="stat-value">0</span>
+                            </div>
+                        </div>
+                        <button id="bpQuitBtn" class="btn btn-danger btn-small">Quit Game</button>
+                    </div>
+                    
+                    <!-- Game Canvas -->
+                    <div class="canvas-container">
+                        <canvas id="bpCanvas" width="900" height="600"></canvas>
+                    </div>
+                    
+                    <!-- Game Controls Info -->
+                    <div class="game-controls">
+                        <p><strong>Controls:</strong> Hover over bubble + Q = Correct Spelling | Hover + R = Incorrect Spelling | ESC = Pause</p>
+                    </div>
+                </div>
+
+                <!-- Instructions Overlay -->
+                <div id="bpInstructionsOverlay" class="overlay" style="display: none;">
+                    <div class="overlay-content">
+                        <h2>How to Play Bubble Pop</h2>
+                        <div class="instructions">
+                            <p><strong>Objective:</strong> Identify whether words are spelled correctly or incorrectly as they float across the screen.</p>
+                            
+                            <h3>Controls:</h3>
+                            <ul>
+                                <li><strong>Hover + Q:</strong> Mark the word as correctly spelled</li>
+                                <li><strong>Hover + R:</strong> Mark the word as incorrectly spelled</li>
+                                <li><strong>ESC:</strong> Pause the game</li>
+                            </ul>
+                            
+                            <h3>Scoring:</h3>
+                            <ul>
+                                <li><strong>Right:</strong> You correctly identified the spelling</li>
+                                <li><strong>Wrong:</strong> You incorrectly identified the spelling</li>
+                                <li><strong>Missed:</strong> The bubble left the screen without being clicked</li>
+                            </ul>
+                            
+                            <h3>Difficulty:</h3>
+                            <ul>
+                                <li><strong>Speed:</strong> How fast bubbles move (0-100)</li>
+                                <li><strong>Movement:</strong> How much bubbles move up and down (0-100)</li>
+                                <li><strong>Spelling Errors:</strong> Percentage of words with errors (0-100%)</li>
+                            </ul>
+                            
+                            <p><strong>Tip:</strong> The game gets progressively harder every 3 minutes!</p>
+                        </div>
+                        <button id="bpCloseInstructions" class="btn btn-primary">Got it!</button>
+                    </div>
+                </div>
+
+                <!-- Pause Overlay -->
+                <div id="bpPauseOverlay" class="overlay" style="display: none;">
+                    <div class="overlay-content">
+                        <h2>Game Paused</h2>
+                        <p>Press ESC to resume</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Results Screen -->
             <div id="resultsScreen" class="screen">
                 <div class="results-card">
@@ -299,11 +425,25 @@
     </div>
 
     <!-- JavaScript Files -->
+    <!-- Core Framework -->
+    <script src="js/core/ExerciseFramework.js"></script>
+    
+    <!-- Shared Components -->
+    <script src="js/components/CanvasRenderer.js"></script>
+    <script src="js/components/InputHandler.js"></script>
+    
+    <!-- Existing Modules -->
     <script src="js/curriculum.js"></script>
     <script src="js/scoreManager.js"></script>
     <script src="js/multipleChoice.js"></script>
     <script src="js/fillInBlank.js"></script>
     <script src="js/spellingExercise.js"></script>
+    
+    <!-- Bubble Pop Exercise -->
+    <script src="js/exercises/bubblePop/BubblePopExercise.js"></script>
+    <script src="js/exercises/bubblePop/BubblePopUI.js"></script>
+    
+    <!-- Main App -->
     <script src="js/app.js"></script>
 </body>
 </html>

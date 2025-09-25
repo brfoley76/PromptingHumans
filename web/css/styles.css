@@ -1015,6 +1015,198 @@ body:not(.dev-mode) .dev-indicator {
     display: none !important;
 }
 
+/* Bubble Pop Game Styles */
+.game-panel {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8fbff;
+    border: 2px solid #003366;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.game-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-label {
+    color: #003366;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.stat-value {
+    color: #0066cc;
+    font-size: 1.3em;
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.btn-small {
+    padding: 8px 20px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    border: 3px solid #003366;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+}
+
+#bpCanvas {
+    display: block;
+    cursor: crosshair;
+}
+
+.game-controls {
+    text-align: center;
+    padding: 15px;
+    background: #e6f2ff;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.game-controls p {
+    color: #003366;
+    font-size: 1em;
+    margin: 0;
+}
+
+/* Overlay Styles */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.overlay-content {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.overlay-content h2 {
+    color: #003366;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2em;
+}
+
+.instructions {
+    color: #004080;
+    line-height: 1.8;
+}
+
+.instructions h3 {
+    color: #003366;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.instructions ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.instructions li {
+    margin-bottom: 8px;
+}
+
+.instructions strong {
+    color: #003366;
+}
+
+/* Range Input Styles */
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e6f2ff;
+    outline: none;
+    margin: 10px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #003366;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #003366;
+    cursor: pointer;
+}
+
+/* Result Item Styles */
+.result-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #f8fbff;
+    border-left: 4px solid #0066cc;
+    border-radius: 4px;
+}
+
+.result-item strong {
+    color: #003366;
+}
+
 /* Print Styles */
 @media print {
     body {
