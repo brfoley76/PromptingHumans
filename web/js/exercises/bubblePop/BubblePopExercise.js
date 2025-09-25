@@ -44,10 +44,8 @@ class BubblePopExercise extends ExerciseFramework {
     getDefaultSettings() {
         return {
             duration: 60,           // seconds
-            speed: 50,             // 0-100 scale
-            tortuosity: 50,        // 0-100 scale
-            spellingErrorRate: 30, // percentage
-            difficulty: 'medium'
+            difficulty: 'easy',     // easy, moderate, hard
+            spellingErrorRate: 30  // percentage
         };
     }
     
@@ -55,6 +53,9 @@ class BubblePopExercise extends ExerciseFramework {
      * Initialize the exercise with canvas and settings
      */
     async initializeGame(canvas, settings = {}) {
+        // Reset all game state for a fresh start
+        this.resetGameState();
+        
         // Initialize base exercise
         this.initialize(settings);
         
@@ -66,9 +67,13 @@ class BubblePopExercise extends ExerciseFramework {
             autoResize: false
         });
         
-        // Set up input handler
-        this.inputHandler = new InputHandler(canvas);
+        // Set up input handler - use document for keyboard events, canvas for mouse events
+        this.inputHandler = new InputHandler(document);
         this.setupInputHandlers();
+        
+        // Make canvas focusable
+        canvas.tabIndex = 1;
+        canvas.focus();
         
         // Load bubble images
         await this.loadBubbleImages();
@@ -86,51 +91,89 @@ class BubblePopExercise extends ExerciseFramework {
     }
     
     /**
+     * Reset all game state for a fresh start
+     */
+    resetGameState() {
+        // Clear bubbles
+        this.bubbles = [];
+        this.nextBubbleId = 0;
+        
+        // Clear timers
+        if (this.spawnTimer) {
+            clearTimeout(this.spawnTimer);
+            this.spawnTimer = null;
+        }
+        if (this.gameTimer) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+        }
+        if (this.rampingTimer) {
+            clearInterval(this.rampingTimer);
+            this.rampingTimer = null;
+        }
+        
+        // Reset ramping level - THIS IS CRITICAL!
+        this.rampingLevel = 0;
+        
+        // Reset scoring
+        this.gameScore = {
+            right: 0,
+            wrong: 0,
+            missed: 0
+        };
+        
+        // Reset hover state
+        this.hoveredBubble = null;
+    }
+    
+    /**
      * Calculate game parameters from settings
      */
     calculateGameParameters() {
         const s = this.settings;
+        this.difficultyMode = s.difficulty;
         
-        // Determine difficulty mode
-        if (s.speed <= 33) {
-            this.difficultyMode = 'easy';
-        } else if (s.speed <= 66) {
-            this.difficultyMode = 'medium';
-        } else {
-            this.difficultyMode = 'hard';
+        // Base speed and settings based on difficulty
+        let baseSpeed, tortuosity, spawnRate;
+        
+        switch (this.difficultyMode) {
+            case 'easy':
+                baseSpeed = 0.3;  // 30% of original speed
+                tortuosity = 0.2; // Low vertical movement
+                spawnRate = 3000; // Spawn every 3 seconds
+                break;
+            case 'moderate':
+                baseSpeed = 0.5;  // 50% of original speed
+                tortuosity = 0.4; // Medium vertical movement
+                spawnRate = 2800; // Slightly faster spawning
+                break;
+            case 'hard':
+                baseSpeed = 0.7;  // 70% of original speed
+                tortuosity = 0.6; // Higher vertical movement
+                spawnRate = 2500; // Faster spawning
+                break;
+            default:
+                baseSpeed = 0.3;
+                tortuosity = 0.2;
+                spawnRate = 3000;
         }
         
         // Store original settings for ramping
         this.originalSettings = {
-            baseSpeed: 0.2 + (s.speed / 100),
-            tortuosity: 0.2 + (s.tortuosity / 100),
+            baseSpeed: baseSpeed,
+            tortuosity: tortuosity,
             spellingErrorRate: s.spellingErrorRate,
-            spawnRate: 2500
+            spawnRate: spawnRate
         };
         
-        // Apply difficulty scaling
-        let speedMultiplier = 1.0;
-        let spawnMultiplier = 1.0;
-        let tortuosityMultiplier = 1.0;
-        
-        if (this.difficultyMode === 'medium') {
-            speedMultiplier = 1.15;
-            spawnMultiplier = 0.9;
-            tortuosityMultiplier = 1.1;
-        } else if (this.difficultyMode === 'hard') {
-            speedMultiplier = 1.3;
-            spawnMultiplier = 0.8;
-            tortuosityMultiplier = 1.2;
-        }
-        
-        // Apply scaled settings
+        // Initial game settings (will be ramped up over time)
         this.gameSettings = {
-            baseSpeed: this.originalSettings.baseSpeed * speedMultiplier,
-            tortuosity: this.originalSettings.tortuosity * tortuosityMultiplier,
+            baseSpeed: this.originalSettings.baseSpeed,
+            tortuosity: this.originalSettings.tortuosity,
             spellingErrorRate: this.originalSettings.spellingErrorRate,
-            spawnRate: this.originalSettings.spawnRate * spawnMultiplier,
-            minFontSize: 18,
-            maxFontSize: 32
+            spawnRate: this.originalSettings.spawnRate,
+            minFontSize: 20,
+            maxFontSize: 34
         };
         
         // Set total questions (time-based, not question count)
@@ -171,17 +214,22 @@ class BubblePopExercise extends ExerciseFramework {
         // Track current hovered bubble
         this.hoveredBubble = null;
         
-        // Mouse move handler to track hover
-        this.inputHandler.on('mousemove', (data) => {
+        // Create a separate mouse handler for the canvas
+        const canvas = this.renderer.canvas;
+        
+        // Mouse move handler to track hover - need to handle canvas-specific coordinates
+        canvas.addEventListener('mousemove', (e) => {
             if (this.state !== 'active') return;
             
-            const bubble = this.getBubbleAt(data.x, data.y);
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const bubble = this.getBubbleAt(x, y);
             if (bubble !== this.hoveredBubble) {
                 this.hoveredBubble = bubble;
                 // Update cursor style
-                if (this.renderer && this.renderer.canvas) {
-                    this.renderer.canvas.style.cursor = bubble ? 'pointer' : 'crosshair';
-                }
+                canvas.style.cursor = bubble ? 'pointer' : 'crosshair';
             }
         });
         
@@ -190,14 +238,18 @@ class BubblePopExercise extends ExerciseFramework {
             if (this.state !== 'active') return;
             
             // Q key - mark as correct spelling
-            if (data.key === 'q' && this.hoveredBubble) {
-                this.handleBubbleClick(this.hoveredBubble, true);
-                this.hoveredBubble = null;
+            if (data.key === 'q') {
+                if (this.hoveredBubble) {
+                    this.handleBubbleClick(this.hoveredBubble, true);
+                    this.hoveredBubble = null;
+                }
             }
             // R key - mark as incorrect spelling
-            else if (data.key === 'r' && this.hoveredBubble) {
-                this.handleBubbleClick(this.hoveredBubble, false);
-                this.hoveredBubble = null;
+            else if (data.key === 'r') {
+                if (this.hoveredBubble) {
+                    this.handleBubbleClick(this.hoveredBubble, false);
+                    this.hoveredBubble = null;
+                }
             }
             // Escape key to pause/quit
             else if (data.key === 'escape') {
@@ -239,34 +291,77 @@ class BubblePopExercise extends ExerciseFramework {
     }
     
     /**
-     * Handle bubble click
+     * Handle bubble click based on difficulty mode
      */
     handleBubbleClick(bubble, markedAsCorrect) {
         if (bubble.clicked) return;
         
-        bubble.clicked = true;
-        bubble.popping = true;
-        bubble.popAnimation = 0;
-        
-        // Check if the answer is right
         const isCorrectSpelling = !bubble.hasError;
-        const answeredCorrectly = (markedAsCorrect === isCorrectSpelling);
+        let shouldPop = false;
+        let isCorrectAction = false;
         
-        if (answeredCorrectly) {
-            this.gameScore.right++;
-            bubble.feedbackColor = '#00ff00';
-        } else {
-            this.gameScore.wrong++;
-            bubble.feedbackColor = '#ff0000';
+        // Different logic based on difficulty
+        switch (this.difficultyMode) {
+            case 'easy':
+                // Only pop if it's a correctly spelled word and player pressed Q
+                if (isCorrectSpelling && markedAsCorrect) {
+                    shouldPop = true;
+                    isCorrectAction = true;
+                } else if (isCorrectSpelling && !markedAsCorrect) {
+                    // Wrong key for correct word
+                    shouldPop = true;
+                    isCorrectAction = false;
+                }
+                // Ignore clicks on misspelled words in easy mode
+                if (!isCorrectSpelling) {
+                    return;
+                }
+                break;
+                
+            case 'moderate':
+                // Only pop if it's an incorrectly spelled word and player pressed R
+                if (!isCorrectSpelling && !markedAsCorrect) {
+                    shouldPop = true;
+                    isCorrectAction = true;
+                } else if (!isCorrectSpelling && markedAsCorrect) {
+                    // Wrong key for incorrect word
+                    shouldPop = true;
+                    isCorrectAction = false;
+                }
+                // Ignore clicks on correctly spelled words in moderate mode
+                if (isCorrectSpelling) {
+                    return;
+                }
+                break;
+                
+            case 'hard':
+                // Traditional mode - must identify both correct and incorrect
+                shouldPop = true;
+                isCorrectAction = (markedAsCorrect === isCorrectSpelling);
+                break;
         }
         
-        // Update score
-        this.score = this.gameScore.right;
-        this.emit('scoreUpdate', {
-            right: this.gameScore.right,
-            wrong: this.gameScore.wrong,
-            missed: this.gameScore.missed
-        });
+        if (shouldPop) {
+            bubble.clicked = true;
+            bubble.popping = true;
+            bubble.popAnimation = 0;
+            
+            if (isCorrectAction) {
+                this.gameScore.right++;
+                bubble.feedbackColor = '#00ff00';
+            } else {
+                this.gameScore.wrong++;
+                bubble.feedbackColor = '#ff0000';
+            }
+            
+            // Update score
+            this.score = this.gameScore.right;
+            this.emit('scoreUpdate', {
+                right: this.gameScore.right,
+                wrong: this.gameScore.wrong,
+                missed: this.gameScore.missed
+            });
+        }
     }
     
     /**
@@ -376,7 +471,7 @@ class BubblePopExercise extends ExerciseFramework {
             tortuosity: individualTortuosity,
             radius: bubbleRadius,
             fontSize: fontSize,
-            color: '#FFFFFF', // White text for better visibility
+            color: '#000000', // Black text for better visibility
             bubbleColor: this.getRandomBubbleColor(), // Add bubble background color
             bubbleImage: this.bubbleImages[Math.floor(Math.random() * this.bubbleImages.length)],
             popping: false,
@@ -387,7 +482,6 @@ class BubblePopExercise extends ExerciseFramework {
         
         this.bubbles.push(bubble);
         this.totalQuestions++;
-        console.log(`Spawned bubble: ${word}, Total bubbles: ${this.bubbles.length}`);
     }
     
     /**
@@ -473,18 +567,21 @@ class BubblePopExercise extends ExerciseFramework {
      * Start ramping timer
      */
     startRampingTimer() {
-        // Every 3 minutes, increase difficulty
+        // Apply ramping every 5 seconds for smooth progression
         this.rampingTimer = setInterval(() => {
-            this.rampingLevel++;
             this.applyRamping();
-        }, 180000);
+        }, 5000);
     }
     
     /**
-     * Apply progressive difficulty ramping
+     * Apply progressive difficulty ramping (15% increase over time)
      */
     applyRamping() {
-        const rampMultiplier = 1 + (this.rampingLevel * 0.2);
+        // Calculate progress through the game (0 to 1)
+        const progress = (this.settings.duration - this.timeRemaining) / this.settings.duration;
+        
+        // Apply 15% increase over the course of the game
+        const rampMultiplier = 1 + (progress * 0.15);
         
         this.gameSettings.baseSpeed = this.originalSettings.baseSpeed * rampMultiplier;
         this.gameSettings.spawnRate = this.originalSettings.spawnRate / rampMultiplier;
@@ -536,7 +633,34 @@ class BubblePopExercise extends ExerciseFramework {
             // Check if bubble went off screen
             if (bubble.x < -bubble.radius * 2) {
                 if (!bubble.clicked) {
-                    this.gameScore.missed++;
+                    // Different scoring based on difficulty
+                    const isCorrectSpelling = !bubble.hasError;
+                    
+                    switch (this.difficultyMode) {
+                        case 'easy':
+                            // In easy mode, unclicked misspelled words count as correct
+                            if (!isCorrectSpelling) {
+                                this.gameScore.right++;
+                            } else {
+                                this.gameScore.missed++;
+                            }
+                            break;
+                            
+                        case 'moderate':
+                            // In moderate mode, unclicked correct words count as correct
+                            if (isCorrectSpelling) {
+                                this.gameScore.right++;
+                            } else {
+                                this.gameScore.missed++;
+                            }
+                            break;
+                            
+                        case 'hard':
+                            // In hard mode, all unclicked words count as missed
+                            this.gameScore.missed++;
+                            break;
+                    }
+                    
                     this.emit('scoreUpdate', {
                         right: this.gameScore.right,
                         wrong: this.gameScore.wrong,
@@ -610,17 +734,17 @@ class BubblePopExercise extends ExerciseFramework {
                     }
                 }
                 
-                // Draw text with shadow for better visibility
+                // Draw text with white background for better visibility
                 this.renderer.drawText(bubble.word, bubble.x, bubble.y, {
                     font: `bold ${bubble.fontSize}px Arial`,
-                    color: bubble.color,
+                    color: '#000000', // Black text
                     align: 'center',
                     baseline: 'middle',
                     shadow: {
-                        color: 'rgba(0,0,0,0.8)',
-                        blur: 4,
-                        offsetX: 2,
-                        offsetY: 2
+                        color: 'rgba(255,255,255,0.9)', // White shadow for contrast
+                        blur: 6,
+                        offsetX: 0,
+                        offsetY: 0
                     }
                 });
             }
@@ -660,15 +784,6 @@ class BubblePopExercise extends ExerciseFramework {
         this.renderer.stopAnimation();
     }
     
-    /**
-     * Called when exercise is resumed
-     */
-    onResume() {
-        this.startGameTimer();
-        this.startSpawning();
-        this.startRampingTimer();
-        this.startGameAnimation();
-    }
     
     /**
      * Called when exercise ends
@@ -698,16 +813,6 @@ class BubblePopExercise extends ExerciseFramework {
         this.totalQuestions = this.gameScore.right + this.gameScore.wrong + this.gameScore.missed;
     }
     
-    /**
-     * Called when exercise is reset
-     */
-    onReset() {
-        this.bubbles = [];
-        this.nextBubbleId = 0;
-        this.gameScore = { right: 0, wrong: 0, missed: 0 };
-        this.timeRemaining = this.settings.duration;
-        this.rampingLevel = 0;
-    }
     
     /**
      * Get exercise results

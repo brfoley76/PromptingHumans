@@ -290,17 +290,26 @@
                             <option value="180">3 minutes</option>
                         </select>
                         
-                        <label for="bpSpeed">Speed: <span id="bpSpeedValue">50</span></label>
-                        <input type="range" id="bpSpeed" min="0" max="100" value="50" 
-                               oninput="document.getElementById('bpSpeedValue').textContent = this.value">
+                        <label for="bpDifficulty">Difficulty:</label>
+                        <select id="bpDifficulty">
+                            <option value="easy">Easy - Click correct words only</option>
+                            <option value="moderate">Moderate - Click incorrect words only</option>
+                            <option value="hard">Hard - Identify both correct and incorrect</option>
+                        </select>
                         
-                        <label for="bpTortuosity">Movement: <span id="bpTortuosityValue">50</span></label>
-                        <input type="range" id="bpTortuosity" min="0" max="100" value="50"
-                               oninput="document.getElementById('bpTortuosityValue').textContent = this.value">
-                        
-                        <label for="bpErrorRate">Spelling Errors: <span id="bpErrorRateValue">30%</span></label>
-                        <input type="range" id="bpErrorRate" min="0" max="100" value="30"
+                        <label for="bpErrorRate">Spelling Error Rate: <span id="bpErrorRateValue">30%</span></label>
+                        <input type="range" id="bpErrorRate" min="10" max="50" value="30"
                                oninput="document.getElementById('bpErrorRateValue').textContent = this.value + '%'">
+                    </div>
+                    
+                    <div class="difficulty-info" style="margin: 20px 0; padding: 15px; background: #f8fbff; border-radius: 8px;">
+                        <h4 style="color: #003366; margin-bottom: 10px;">Difficulty Details:</h4>
+                        <ul style="color: #004080; font-size: 0.9em; list-style: none; padding: 0;">
+                            <li><strong>Easy:</strong> Slower speed (30%), identify correct words only</li>
+                            <li><strong>Moderate:</strong> Medium speed (50%), identify incorrect words only</li>
+                            <li><strong>Hard:</strong> Faster speed (70%), identify both types</li>
+                        </ul>
+                        <p style="color: #666; font-size: 0.85em; margin-top: 10px;">Speed and spawn rate increase 15% over time in all modes.</p>
                     </div>
                     <div class="button-group">
                         <button id="bpBackBtn" class="btn btn-secondary">Back to Menu</button>
@@ -354,9 +363,16 @@
                             
                             <h3>Controls:</h3>
                             <ul>
-                                <li><strong>Hover + Q:</strong> Mark the word as correctly spelled</li>
-                                <li><strong>Hover + R:</strong> Mark the word as incorrectly spelled</li>
+                                <li><strong>Hover over bubble + Q:</strong> Mark as correctly spelled</li>
+                                <li><strong>Hover over bubble + R:</strong> Mark as incorrectly spelled</li>
                                 <li><strong>ESC:</strong> Pause the game</li>
+                            </ul>
+                            
+                            <h3>Difficulty Modes:</h3>
+                            <ul>
+                                <li><strong>Easy:</strong> Click only correctly spelled words (Q key). Unclicked misspelled words count as correct.</li>
+                                <li><strong>Moderate:</strong> Click only incorrectly spelled words (R key). Unclicked correct words count as correct.</li>
+                                <li><strong>Hard:</strong> Must identify both correct (Q) and incorrect (R) words.</li>
                             </ul>
                             
                             <h3>Scoring:</h3>

@@ -163,21 +163,13 @@ class BubblePopUI {
      */
     getSettingsFromUI() {
         const duration = parseInt(document.getElementById('bpDuration')?.value || 60);
-        const speed = parseInt(document.getElementById('bpSpeed')?.value || 50);
-        const tortuosity = parseInt(document.getElementById('bpTortuosity')?.value || 50);
+        const difficulty = document.getElementById('bpDifficulty')?.value || 'easy';
         const spellingErrorRate = parseInt(document.getElementById('bpErrorRate')?.value || 30);
-        
-        // Determine difficulty based on speed
-        let difficulty = 'medium';
-        if (speed <= 33) difficulty = 'easy';
-        else if (speed > 66) difficulty = 'hard';
         
         return {
             duration,
-            speed,
-            tortuosity,
-            spellingErrorRate,
-            difficulty
+            difficulty,
+            spellingErrorRate
         };
     }
     
@@ -356,13 +348,11 @@ class BubblePopUI {
         
         // Reset settings to defaults
         const durationEl = document.getElementById('bpDuration');
-        const speedEl = document.getElementById('bpSpeed');
-        const tortuosityEl = document.getElementById('bpTortuosity');
+        const difficultyEl = document.getElementById('bpDifficulty');
         const errorRateEl = document.getElementById('bpErrorRate');
         
         if (durationEl) durationEl.value = '60';
-        if (speedEl) speedEl.value = '50';
-        if (tortuosityEl) tortuosityEl.value = '50';
+        if (difficultyEl) difficultyEl.value = 'easy';
         if (errorRateEl) errorRateEl.value = '30';
         
         // Update range displays
@@ -373,20 +363,9 @@ class BubblePopUI {
      * Update range slider displays
      */
     updateRangeDisplays() {
-        const speedValue = document.getElementById('bpSpeedValue');
-        const tortuosityValue = document.getElementById('bpTortuosityValue');
         const errorRateValue = document.getElementById('bpErrorRateValue');
-        
-        const speedSlider = document.getElementById('bpSpeed');
-        const tortuositySlider = document.getElementById('bpTortuosity');
         const errorRateSlider = document.getElementById('bpErrorRate');
         
-        if (speedValue && speedSlider) {
-            speedValue.textContent = speedSlider.value;
-        }
-        if (tortuosityValue && tortuositySlider) {
-            tortuosityValue.textContent = tortuositySlider.value;
-        }
         if (errorRateValue && errorRateSlider) {
             errorRateValue.textContent = errorRateSlider.value + '%';
         }
