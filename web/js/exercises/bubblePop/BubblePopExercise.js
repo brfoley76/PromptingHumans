@@ -45,7 +45,7 @@ class BubblePopExercise extends ExerciseFramework {
         return {
             duration: 60,           // seconds
             difficulty: 'easy',     // easy, moderate, hard
-            spellingErrorRate: 30  // percentage
+            spellingErrorRate: 50  // percentage
         };
     }
     
@@ -621,7 +621,9 @@ class BubblePopExercise extends ExerciseFramework {
                     
                     switch (this.difficultyMode) {
                         case 'easy':
-                            // In easy mode, unclicked misspelled words count as correct
+                            // In easy mode: target is correct words (Q key)
+                            // Unclicked misspelled words count as correct (correctly ignored)
+                            // Unclicked correct words count as missed (should have clicked)
                             if (!isCorrectSpelling) {
                                 this.gameScore.right++;
                             } else {
@@ -630,7 +632,9 @@ class BubblePopExercise extends ExerciseFramework {
                             break;
                             
                         case 'moderate':
-                            // In moderate mode, unclicked correct words count as correct
+                            // In moderate mode: target is misspelled words (R key)
+                            // Unclicked correct words count as correct (correctly ignored)
+                            // Unclicked misspelled words count as missed (should have clicked)
                             if (isCorrectSpelling) {
                                 this.gameScore.right++;
                             } else {
