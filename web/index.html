@@ -90,6 +90,21 @@
                         <button class="btn btn-exercise" data-exercise-btn="bubble_pop" disabled>Locked</button>
                     </div>
 
+                    <!-- Speed Reading Card -->
+                    <div class="exercise-card locked" data-exercise="speed_reading">
+                        <div class="exercise-header">
+                            <h3>Speed Reading</h3>
+                            <span class="difficulty-badge hard">Advanced</span>
+                        </div>
+                        <p class="exercise-description">Read streaming text and identify errors in real-time.</p>
+                        <div class="exercise-scores"></div>
+                        <div class="lock-overlay">
+                            <span class="lock-icon">🔒</span>
+                            <p>Score 80%+ on Bubble Pop (Hard) to unlock</p>
+                        </div>
+                        <button class="btn btn-exercise" data-exercise-btn="speed_reading" disabled>Locked</button>
+                    </div>
+
                     <!-- More exercises can be added here -->
                 </div>
             </div>
@@ -404,6 +419,46 @@
                 </div>
             </div>
 
+            <!-- Speed Reading Screen -->
+            <div id="speedReadingScreen" class="screen">
+                <!-- Exercise Settings -->
+                <div id="srSettingsPanel" class="settings-panel">
+                    <h2>Speed Reading Exercise</h2>
+                    <div class="settings">
+                        <label for="srDifficulty">Difficulty:</label>
+                        <select id="srDifficulty">
+                            <option value="easy">Easy - Vocabulary Variant</option>
+                            <option value="moderate">Moderate - Spelling Variant (20% faster)</option>
+                            <option value="hard">Hard - Both Variants (40% faster)</option>
+                        </select>
+                        
+                        <div id="srDifficultyDesc" class="difficulty-description" style="margin: 15px 0; padding: 10px; background: #f8fbff; border-radius: 5px; color: #004080;">
+                            <!-- Description will be updated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="srBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="srStartBtn" class="btn btn-primary">Start Reading</button>
+                    </div>
+                </div>
+
+                <!-- Game Panel -->
+                <div id="srGamePanel" class="game-panel" style="display: none;">
+                    <!-- Game Canvas (contains all three zones) -->
+                    <div class="canvas-container">
+                        <canvas id="srCanvas" width="900" height="600"></canvas>
+                    </div>
+                    
+                    <!-- Game Controls Info -->
+                    <div class="game-controls">
+                        <p><strong>Instructions:</strong> Click on the correct text variant as it scrolls by. Gold flash = correct, Red flash = wrong (resets to checkpoint).</p>
+                    </div>
+                    
+                    <button id="srQuitBtn" class="btn btn-danger btn-small">Quit Reading</button>
+                </div>
+            </div>
+
             <!-- Results Screen -->
             <div id="resultsScreen" class="screen">
                 <div class="results-card">
@@ -458,6 +513,10 @@
     <!-- Bubble Pop Exercise -->
     <script src="js/exercises/bubblePop/BubblePopExercise.js"></script>
     <script src="js/exercises/bubblePop/BubblePopUI.js"></script>
+    
+    <!-- Speed Reading Exercise -->
+    <script src="js/exercises/speedReading/SpeedReadingExercise.js"></script>
+    <script src="js/exercises/speedReading/SpeedReadingUI.js"></script>
     
     <!-- Main App -->
     <script src="js/app.js"></script>

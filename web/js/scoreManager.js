@@ -70,11 +70,7 @@ class ScoreManager {
                     unlocked: false,
                     scores: {}
                 },
-                speed_reading_vocab: {
-                    unlocked: false,
-                    scores: {}
-                },
-                speed_reading_spelling: {
+                speed_reading: {
                     unlocked: false,
                     scores: {}
                 }
@@ -150,11 +146,12 @@ class ScoreManager {
     checkUnlockConditions(exerciseType, difficulty, percentage) {
         // Only unlock next exercise if:
         // 1. Score is 80% or higher
-        // 2. Difficulty is "hard" (5 for multiple choice, "moderate" for fill-in-blank)
+        // 2. Difficulty is "hard" (5 for multiple choice, "moderate" for fill-in-blank, "hard" for others)
         const isHardDifficulty = 
             (exerciseType === 'multiple_choice' && difficulty === '5') ||
             (exerciseType === 'fill_in_the_blank' && difficulty === 'moderate') ||
-            (exerciseType === 'spelling' && difficulty === 'hard');
+            (exerciseType === 'spelling' && difficulty === 'hard') ||
+            (exerciseType === 'bubble_pop' && difficulty === 'hard');
         
         if (percentage >= 80 && isHardDifficulty) {
             const exerciseOrder = [
@@ -162,8 +159,7 @@ class ScoreManager {
                 'fill_in_the_blank',
                 'spelling',
                 'bubble_pop',
-                'speed_reading_vocab',
-                'speed_reading_spelling'
+                'speed_reading'
             ];
             
             const currentIndex = exerciseOrder.indexOf(exerciseType);

@@ -30,6 +30,10 @@ class App {
         this.bubblePopExercise = new BubblePopExercise(this.curriculumManager);
         this.bubblePopUI = new BubblePopUI(this, this.bubblePopExercise);
         
+        // Initialize Speed Reading game
+        this.speedReadingExercise = new SpeedReadingExercise(this.curriculumManager);
+        this.speedReadingUI = new SpeedReadingUI(this, this.speedReadingExercise);
+        
         this.currentExercise = null;
         this.currentExerciseType = null;
         this.selectedAnswer = null;
@@ -164,12 +168,13 @@ class App {
         const locksContainer = document.getElementById('exerciseLocks');
         if (!locksContainer) return;
         
-        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling', 'bubble_pop'];
+        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling', 'bubble_pop', 'speed_reading'];
         const exerciseNames = {
             'multiple_choice': 'Multiple Choice',
             'fill_in_the_blank': 'Fill in the Blank',
             'spelling': 'Spelling',
-            'bubble_pop': 'Bubble Pop'
+            'bubble_pop': 'Bubble Pop',
+            'speed_reading': 'Speed Reading'
         };
         
         locksContainer.innerHTML = '';
@@ -351,6 +356,8 @@ class App {
                 return difficulty === 'easy' ? 'Easy' : difficulty === 'medium' ? 'Medium' : 'Hard';
             } else if (exerciseType === 'bubble_pop') {
                 return difficulty === 'easy' ? 'Easy' : difficulty === 'moderate' ? 'Moderate' : 'Hard';
+            } else if (exerciseType === 'speed_reading') {
+                return difficulty === 'easy' ? 'Easy' : difficulty === 'moderate' ? 'Moderate' : 'Hard';
             }
             return difficulty;
         };
@@ -437,6 +444,10 @@ class App {
             this.showScreen('bubblePopScreen');
             this.bubblePopUI.initialize();
             this.bubblePopUI.show();
+        } else if (exerciseType === 'speed_reading') {
+            this.showScreen('speedReadingScreen');
+            this.speedReadingUI.initialize();
+            this.speedReadingUI.show();
         }
     }
 
@@ -1008,6 +1019,11 @@ class App {
             this.showScreen('bubblePopScreen');
             // Start the game directly without showing settings
             this.bubblePopUI.startGame();
+        } else if (this.currentExerciseType === 'speed_reading') {
+            // For Speed Reading, restart with the same settings
+            this.showScreen('speedReadingScreen');
+            // Start the game directly without showing settings
+            this.speedReadingUI.startGame();
         }
     }
 
