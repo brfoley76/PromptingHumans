@@ -19,6 +19,7 @@ class SpeedReadingExercise extends ExerciseFramework {
         this.currentVariants = null;
         this.correctVariantPosition = null; // 'top' or 'bottom'
         this.variantSelected = false;  // Track if variant has been selected
+        this.hoveredVariant = null; // Track which variant is being hovered
         
         // Scoring
         this.gameScore = {
@@ -57,6 +58,10 @@ class SpeedReadingExercise extends ExerciseFramework {
         // Animation state
         this.animationId = null;
         this.lastTimestamp = 0;
+        
+        // Dev mode
+        this.isDevMode = window.location.search.includes('dev');
+        this.isPaused = false;
     }
     
     /**
@@ -112,6 +117,7 @@ class SpeedReadingExercise extends ExerciseFramework {
         this.currentVariants = null;
         this.correctVariantPosition = null;
         this.variantSelected = false;
+        this.hoveredVariant = null;
         
         this.gameScore = {
             correct: 0,
@@ -211,29 +217,64 @@ class SpeedReadingExercise extends ExerciseFramework {
      * Setup input handlers
      */
     setupInputHandlers() {
-        // Click handler for variant selection
+        // Mouse move handler for hover effects
+        this.inputHandler.on('mousemove', (data) => {
+            if (this.state !== 'active' || this.isPaused) return;
+            if (!this.currentVariants || this.variantSelected) return;
+            
+            // Check if mouse is over a variant
+            const streamingY = this.zones.header.height + this.zones.book.height;
+            const topY = streamingY + 40;
+            const bottomY = streamingY + 80;
+            
+            // Check if mouse is horizontally within variant text
+            const textWidth = this.renderer.measureText(
+                this.currentVariants.top.text,
+                `${this.textStyle.fontSize}px ${this.textStyle.font}`
+            ).width;
+            
+            if (data.x >= this.currentVariants.x && data.x <= this.currentVariants.x + textWidth) {
+                // Check vertical position
+                if (data.y >= topY - 15 && data.y <= topY + 15) {
+                    this.hoveredVariant = 'top';
+                    this.renderer.canvas.style.cursor = 'pointer';
+                } else if (data.y >= bottomY - 15 && data.y <= bottomY + 15) {
+                    this.hoveredVariant = 'bottom';
+                    this.renderer.canvas.style.cursor = 'pointer';
+                } else {
+                    this.hoveredVariant = null;
+                    this.renderer.canvas.style.cursor = 'default';
+                }
+            } else {
+                this.hoveredVariant = null;
+                this.renderer.canvas.style.cursor = 'default';
+            }
+        });
+        
+        // Click handler for variant selection and pause button
         this.inputHandler.on('click', (data) => {
             if (this.state !== 'active') return;
-            if (!this.currentVariants) return;
             
-            // Determine which variant was clicked based on y position
-            const streamingY = this.zones.header.height + this.zones.book.height;
-            const lineHeight = this.textStyle.lineHeight;
-            
-            if (data.y >= streamingY && data.y <= this.renderer.height) {
-                const relativeY = data.y - streamingY;
+            // Check if pause button was clicked (dev mode)
+            if (this.isDevMode) {
+                const pauseBtnX = this.renderer.width - 150;
+                const pauseBtnY = 25;
+                const pauseBtnWidth = 100;
+                const pauseBtnHeight = 30;
                 
-                // Check if click is on top or bottom line
-                let clickedPosition;
-                if (relativeY < streamingY + lineHeight + 10) {
-                    clickedPosition = 'top';
-                } else if (relativeY < streamingY + (lineHeight * 2) + 20) {
-                    clickedPosition = 'bottom';
-                } else {
-                    return; // Click outside variant lines
+                if (data.x >= pauseBtnX && data.x <= pauseBtnX + pauseBtnWidth &&
+                    data.y >= pauseBtnY && data.y <= pauseBtnY + pauseBtnHeight) {
+                    this.togglePause();
+                    return;
                 }
-                
-                this.handleVariantSelection(clickedPosition);
+            }
+            
+            if (this.isPaused) return;
+            if (!this.currentVariants || this.variantSelected) return;
+            
+            // Use the hovered variant for selection
+            if (this.hoveredVariant) {
+                this.handleVariantSelection(this.hoveredVariant);
             }
         });
         
@@ -243,6 +284,9 @@ class SpeedReadingExercise extends ExerciseFramework {
             
             if (data.key === 'escape') {
                 this.pause();
+            } else if (data.key === ' ' && this.isDevMode) {
+                // Spacebar to pause in dev mode
+                this.togglePause();
             }
         });
     }
@@ -267,48 +311,8 @@ class SpeedReadingExercise extends ExerciseFramework {
             this.currentVariants.selected = true;
             this.variantSelected = true;
             
-            // Convert correct variant to streaming words
-            const correctText = this.correctVariantPosition === 'top' 
-                ? this.currentVariants.top.text 
-                : this.currentVariants.bottom.text;
-            
-            // Check for paragraph breaks
-            const hasParagraphBreak = correctText.includes('\n\n');
-            const textToProcess = correctText.replace(/\n\n/g, ' ');
-            
-            // Add words from correct variant to streaming
-            const words = textToProcess.split(' ').filter(w => w.trim());
-            let currentX = this.currentVariants.x;
-            
-            words.forEach((word, index) => {
-                if (word.trim()) {
-                    const wordObj = {
-                        word: word,
-                        x: currentX,
-                        fragmentIndex: this.currentFragmentIndex - 1,
-                        isFromVariant: true
-                    };
-                    
-                    // Mark last word if fragment has paragraph break
-                    if (hasParagraphBreak && index === words.length - 1) {
-                        wordObj.hasParagraphBreak = true;
-                        const fourSpacesWidth = this.renderer.measureText(
-                            '    ',
-                            `${this.textStyle.fontSize}px ${this.textStyle.font}`
-                        ).width;
-                        wordObj.extraSpacing = fourSpacesWidth;
-                    }
-                    
-                    this.streamingWords.push(wordObj);
-                    
-                    // Add spacing between words
-                    const wordWidth = this.renderer.measureText(
-                        word + ' ',
-                        `${this.textStyle.fontSize}px ${this.textStyle.font}`
-                    ).width;
-                    currentX += wordWidth;
-                }
-            });
+            // Just mark as selected - the variant will turn yellow and continue flowing
+            // No need to add text to streaming since it's already displayed as a variant
             
             // Clear variants after a short delay
             setTimeout(() => {
@@ -445,21 +449,32 @@ class SpeedReadingExercise extends ExerciseFramework {
     }
     
     /**
+     * Toggle pause state (dev mode)
+     */
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        console.log(`Speed Reading ${this.isPaused ? 'PAUSED' : 'RESUMED'}`);
+    }
+    
+    /**
      * Continuous streaming manager
      */
     continuousStream() {
-        const streamInterval = setInterval(() => {
+        this.streamInterval = setInterval(() => {
             if (this.state !== 'active') {
-                clearInterval(streamInterval);
+                clearInterval(this.streamInterval);
                 return;
             }
             
+            if (this.isPaused) return; // Skip if paused
+            
             // Check if we need to prepare more content
-            const lastWord = this.streamingWords[this.streamingWords.length - 1];
-            const lastX = lastWord ? lastWord.x : this.renderer.width;
+            const lastStreamingWord = this.streamingWords[this.streamingWords.length - 1];
+            const lastQueuedWord = this.wordQueue[this.wordQueue.length - 1];
+            const lastX = lastQueuedWord ? lastQueuedWord.x : (lastStreamingWord ? lastStreamingWord.x : this.renderer.width);
             
             // If last word is getting close to screen edge and we have no variants, prepare next
-            if (lastX < this.renderer.width + 200 && !this.currentVariants && this.wordQueue.length === 0) {
+            if (lastX < this.renderer.width + 300 && !this.currentVariants && this.wordQueue.length < 5) {
                 this.prepareNextFragment();
             }
             
@@ -467,14 +482,16 @@ class SpeedReadingExercise extends ExerciseFramework {
             if (this.wordQueue.length > 0 && !this.currentVariants) {
                 const nextWord = this.wordQueue.shift();
                 
-                // If previous word had paragraph break, adjust position
+                // If previous word had paragraph break, add extra spacing
                 if (this.streamingWords.length > 0) {
                     const prevWord = this.streamingWords[this.streamingWords.length - 1];
-                    if (prevWord.hasParagraphBreak && prevWord.extraSpacing) {
-                        // Shift all queued words by the extra spacing
-                        nextWord.x += prevWord.extraSpacing;
+                    if (prevWord.hasParagraphBreak) {
+                        // Add visual paragraph spacing
+                        const paragraphSpacing = this.renderer.measureText('    ', `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                        nextWord.x += paragraphSpacing;
+                        // Shift all remaining queued words
                         for (let qWord of this.wordQueue) {
-                            qWord.x += prevWord.extraSpacing;
+                            qWord.x += paragraphSpacing;
                         }
                     }
                 }
@@ -488,13 +505,24 @@ class SpeedReadingExercise extends ExerciseFramework {
      * Prepare next fragment for streaming
      */
     prepareNextFragment() {
+        // Debug logging
+        if (this.isDevMode) {
+            console.log(`\n=== Preparing fragment ${this.currentFragmentIndex} ===`);
+        }
+        
         // Find the next valid fragment index
-        while (this.currentFragmentIndex < 100) { // Reasonable upper limit
-            const canonical = this.narrative.canonical[this.currentFragmentIndex.toString()];
-            if (!canonical) {
-                this.currentFragmentIndex++;
-                continue;
+        const maxFragments = Object.keys(this.narrative.canonical).length;
+        
+        if (this.currentFragmentIndex >= maxFragments) {
+            // All fragments completed
+            if (this.streamingWords.length === 0 && this.wordQueue.length === 0) {
+                this.end();
             }
+            return;
+        }
+        
+        const canonical = this.narrative.canonical[this.currentFragmentIndex.toString()];
+        if (canonical) {
             
             const variant = this.getVariantFragment(this.currentFragmentIndex);
             
@@ -503,9 +531,34 @@ class SpeedReadingExercise extends ExerciseFramework {
                 const correctIsTop = Math.random() < 0.5;
                 this.correctVariantPosition = correctIsTop ? 'top' : 'bottom';
                 
-                // Calculate starting position based on last streaming word
-                const lastWord = this.streamingWords[this.streamingWords.length - 1];
-                const startX = lastWord ? lastWord.x + 100 : this.renderer.width;
+                // Calculate variant position based on last element
+                let startX = this.renderer.width;
+                
+                // Check both streaming words and queued words for last position
+                let lastX = 0;
+                let needsSpace = false;
+                
+                if (this.streamingWords.length > 0) {
+                    const lastWord = this.streamingWords[this.streamingWords.length - 1];
+                    const wordWidth = this.renderer.measureText(lastWord.word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    lastX = lastWord.x + wordWidth;
+                    needsSpace = true;
+                }
+                
+                if (this.wordQueue.length > 0) {
+                    const lastQueued = this.wordQueue[this.wordQueue.length - 1];
+                    const wordWidth = this.renderer.measureText(lastQueued.word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    const queuedX = lastQueued.x + wordWidth;
+                    if (queuedX > lastX) {
+                        lastX = queuedX;
+                        needsSpace = true;
+                    }
+                }
+                
+                if (needsSpace) {
+                    const spaceWidth = this.renderer.measureText(' ', `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    startX = lastX + spaceWidth;
+                }
                 
                 // Clean text for both variants
                 const cleanedCanonical = { ...canonical, text: this.cleanText(canonical.text) };
@@ -539,8 +592,38 @@ class SpeedReadingExercise extends ExerciseFramework {
                 }
                 
                 const words = textToProcess.split(' ').filter(w => w.trim());
-                const lastWord = this.streamingWords[this.streamingWords.length - 1];
-                let currentX = lastWord ? lastWord.x + this.renderer.measureText(lastWord.word + ' ', `${this.textStyle.fontSize}px ${this.textStyle.font}`).width : this.renderer.width;
+                
+                // Calculate starting position - check all existing elements
+                let currentX = this.renderer.width;
+                let lastX = 0;
+                
+                // Check streaming words
+                if (this.streamingWords.length > 0) {
+                    const lastWord = this.streamingWords[this.streamingWords.length - 1];
+                    const wordWidth = this.renderer.measureText(lastWord.word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    lastX = Math.max(lastX, lastWord.x + wordWidth);
+                }
+                
+                // Check queued words
+                if (this.wordQueue.length > 0) {
+                    const lastQueued = this.wordQueue[this.wordQueue.length - 1];
+                    const wordWidth = this.renderer.measureText(lastQueued.word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    lastX = Math.max(lastX, lastQueued.x + wordWidth);
+                }
+                
+                // Check current variants
+                if (this.currentVariants) {
+                    const variantWidth = this.renderer.measureText(
+                        this.currentVariants.top.text,
+                        `${this.textStyle.fontSize}px ${this.textStyle.font}`
+                    ).width;
+                    lastX = Math.max(lastX, this.currentVariants.x + variantWidth);
+                }
+                
+                if (lastX > 0) {
+                    const spaceWidth = this.renderer.measureText(' ', `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                    currentX = lastX + spaceWidth;
+                }
                 
                 words.forEach((word, index) => {
                     if (word.trim()) {
@@ -550,38 +633,33 @@ class SpeedReadingExercise extends ExerciseFramework {
                             fragmentIndex: this.currentFragmentIndex,
                             isCanonical: true
                         });
-                        // Add spacing between words
-                        const wordWidth = this.renderer.measureText(
-                            word + ' ',
-                            `${this.textStyle.fontSize}px ${this.textStyle.font}`
-                        ).width;
-                        currentX += wordWidth;
+                        // Add spacing between words (word width + space)
+                        const wordWidth = this.renderer.measureText(word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                        const spaceWidth = this.renderer.measureText(' ', `${this.textStyle.fontSize}px ${this.textStyle.font}`).width;
+                        currentX += wordWidth + spaceWidth;
+                        
+                        if (this.isDevMode) {
+                            console.log(`  Queued word "${word}" at x=${Math.round(currentX - wordWidth - spaceWidth)}`);
+                        }
                     }
                 });
                 
-                // Add 4 spaces after paragraph break fragments
-                if (addExtraSpace && words.length > 0) {
-                    const fourSpacesWidth = this.renderer.measureText(
-                        '    ',
-                        `${this.textStyle.fontSize}px ${this.textStyle.font}`
-                    ).width;
-                    // Update the position of the last word to include extra spacing
-                    if (this.wordQueue.length > 0) {
-                        const lastQueuedWord = this.wordQueue[this.wordQueue.length - 1];
-                        lastQueuedWord.hasParagraphBreak = true;
-                        lastQueuedWord.extraSpacing = fourSpacesWidth;
-                    }
+                // Add more spacing after paragraph break fragments
+                if (addExtraSpace && this.wordQueue.length > 0) {
+                    // Mark the last word with paragraph break
+                    const lastQueuedWord = this.wordQueue[this.wordQueue.length - 1];
+                    lastQueuedWord.hasParagraphBreak = true;
                 }
             }
             
-            this.currentFragmentIndex++;
-            return; // Exit after processing one fragment
+            
+            // Debug logging
+            if (this.isDevMode) {
+                console.log(`Fragment ${this.currentFragmentIndex} prepared: "${canonical.text.substring(0, 30)}..."`);
+            }
         }
         
-        // All fragments completed
-        if (this.streamingWords.length === 0 && this.wordQueue.length === 0) {
-            this.end();
-        }
+        this.currentFragmentIndex++;
     }
     
     /**
@@ -636,6 +714,8 @@ class SpeedReadingExercise extends ExerciseFramework {
     update(deltaTime) {
         if (!deltaTime || deltaTime > 0.1) deltaTime = 0.016; // Cap at 60fps
         
+        if (this.isPaused) return; // Skip update if paused
+        
         const movement = this.currentSpeed * deltaTime;
         
         // Update streaming words position
@@ -644,11 +724,12 @@ class SpeedReadingExercise extends ExerciseFramework {
             word.x -= movement;
             
             // Check if word has passed left border
-            if (word.x < 0) {
-                // Add to completed words
+            if (word.x + this.renderer.measureText(word.word, `${this.textStyle.fontSize}px ${this.textStyle.font}`).width < 0) {
+                // Add to completed words with all properties
                 this.completedWords.push({
                     word: word.word,
-                    fragmentIndex: word.fragmentIndex
+                    fragmentIndex: word.fragmentIndex,
+                    hasParagraphBreak: word.hasParagraphBreak || false
                 });
                 
                 // Remove from streaming
@@ -662,7 +743,7 @@ class SpeedReadingExercise extends ExerciseFramework {
         }
         
         // Update variant position
-        if (this.currentVariants && !this.variantSelected) {
+        if (this.currentVariants) {
             this.currentVariants.x -= movement;
             
             // Check if variants have passed without selection
@@ -672,10 +753,29 @@ class SpeedReadingExercise extends ExerciseFramework {
             ).width;
             
             if (this.currentVariants.x + textWidth < 0) {
+                // Variant has passed left edge
                 if (!this.currentVariants.selected) {
                     // Treat as wrong selection
                     this.gameScore.wrong++;
                     this.resetToCheckpoint();
+                } else {
+                    // Add correct variant text to completed words
+                    const correctText = this.correctVariantPosition === 'top' 
+                        ? this.currentVariants.top.text 
+                        : this.currentVariants.bottom.text;
+                    
+                    const words = correctText.split(' ').filter(w => w.trim());
+                    words.forEach(word => {
+                        this.completedWords.push({
+                            word: word,
+                            fragmentIndex: this.currentFragmentIndex - 1,
+                            hasParagraphBreak: false
+                        });
+                    });
+                    
+                    // Clear variants
+                    this.currentVariants = null;
+                    this.variantSelected = false;
                 }
             }
         }
@@ -742,6 +842,29 @@ class SpeedReadingExercise extends ExerciseFramework {
             this.renderer.width, this.zones.header.height,
             { color: '#CCCCCC', width: 2 }
         );
+        
+        // Draw pause button in dev mode
+        if (this.isDevMode) {
+            const btnX = this.renderer.width - 150;
+            const btnY = 25;
+            const btnWidth = 100;
+            const btnHeight = 30;
+            
+            // Button background
+            this.renderer.drawRect(btnX, btnY - 15, btnWidth, btnHeight, {
+                fillColor: this.isPaused ? '#FF6B6B' : '#4CAF50',
+                strokeColor: '#333333',
+                lineWidth: 2
+            });
+            
+            // Button text
+            this.renderer.drawText(this.isPaused ? 'PAUSED' : 'Pause', btnX + 50, btnY, {
+                font: 'bold 16px Arial',
+                color: '#FFFFFF',
+                align: 'center',
+                baseline: 'middle'
+            });
+        }
     }
     
     /**
@@ -839,56 +962,65 @@ class SpeedReadingExercise extends ExerciseFramework {
                 }
             }
             
-            // Draw vertical separator between variants
-            const separatorY = streamingY + 60;
-            this.renderer.drawLine(
-                0, separatorY,
-                this.renderer.width, separatorY,
-                { color: '#E0E0E0', width: 1 }
-            );
-            
-            // Only show the non-selected variant if one has been selected
+            // Show both variants, with correct one in yellow if selected
             if (!this.currentVariants.selected) {
-                // Top variant
+                // Top variant with hover effect
+                const topColor = this.hoveredVariant === 'top' ? '#0066CC' : color;
                 this.renderer.drawText(this.currentVariants.top.text, this.currentVariants.x, topY, {
                     font: `${this.textStyle.fontSize}px ${this.textStyle.font}`,
-                    color: color,
+                    color: topColor,
                     align: 'left',
                     baseline: 'middle'
                 });
                 
-                // Bottom variant
+                // Bottom variant with hover effect
+                const bottomColor = this.hoveredVariant === 'bottom' ? '#0066CC' : color;
                 this.renderer.drawText(this.currentVariants.bottom.text, this.currentVariants.x, bottomY, {
                     font: `${this.textStyle.fontSize}px ${this.textStyle.font}`,
-                    color: color,
+                    color: bottomColor,
                     align: 'left',
                     baseline: 'middle'
                 });
             } else {
-                // Only show the selected (correct) variant
-                const selectedText = this.correctVariantPosition === 'top' 
-                    ? this.currentVariants.top.text 
-                    : this.currentVariants.bottom.text;
-                const selectedY = streamingY + 60;
+                // Show both variants, with correct one in yellow
+                const topColor = this.correctVariantPosition === 'top' ? '#FFD700' : '#999999';
+                const bottomColor = this.correctVariantPosition === 'bottom' ? '#FFD700' : '#999999';
                 
-                this.renderer.drawText(selectedText, this.currentVariants.x, selectedY, {
+                this.renderer.drawText(this.currentVariants.top.text, this.currentVariants.x, topY, {
                     font: `${this.textStyle.fontSize}px ${this.textStyle.font}`,
-                    color: color,
+                    color: topColor,
+                    align: 'left',
+                    baseline: 'middle'
+                });
+                
+                this.renderer.drawText(this.currentVariants.bottom.text, this.currentVariants.x, bottomY, {
+                    font: `${this.textStyle.fontSize}px ${this.textStyle.font}`,
+                    color: bottomColor,
                     align: 'left',
                     baseline: 'middle'
                 });
             }
+                
             
-            // Highlight on hover (only if not selected)
-            if (!this.currentVariants.selected) {
-                const hoverText = 'Click to select the correct text';
-                this.renderer.drawText(hoverText, this.renderer.width / 2, streamingY + 120, {
-                    font: `italic 16px Arial`,
-                    color: '#999999',
-                    align: 'center',
-                    baseline: 'middle'
-                });
+            // Draw hover highlight background
+            if (this.hoveredVariant && !this.currentVariants.selected) {
+                    const highlightY = this.hoveredVariant === 'top' ? topY : bottomY;
+                    const textWidth = this.renderer.measureText(
+                        this.currentVariants[this.hoveredVariant].text,
+                        `${this.textStyle.fontSize}px ${this.textStyle.font}`
+                    ).width;
+                    
+                    // Draw subtle background highlight using renderer's drawRect method
+                    this.renderer.drawRect(
+                        this.currentVariants.x - 5,
+                        highlightY - 15,
+                        textWidth + 10,
+                        30,
+                        { fillColor: 'rgba(0, 102, 204, 0.1)' }
+                );
             }
+            
+            // Removed "Click to select" prompt
         }
     }
     
@@ -950,6 +1082,10 @@ class SpeedReadingExercise extends ExerciseFramework {
         if (this.speedRampingTimer) {
             clearInterval(this.speedRampingTimer);
             this.speedRampingTimer = null;
+        }
+        if (this.streamInterval) {
+            clearInterval(this.streamInterval);
+            this.streamInterval = null;
         }
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
