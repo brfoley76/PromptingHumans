@@ -9,6 +9,7 @@ class BubblePopUI {
         this.exercise = bubblePopExercise;
         this.canvas = null;
         this.isInstructionsShown = false;
+        this.lastSettings = null; // Store last used settings for retry
     }
     
     /**
@@ -123,6 +124,11 @@ class BubblePopUI {
         if (settingsPanel) settingsPanel.style.display = 'block';
         if (gamePanel) gamePanel.style.display = 'none';
         
+        // Restore last settings if available
+        if (this.lastSettings) {
+            this.restoreSettingsToUI(this.lastSettings);
+        }
+        
         // Show instructions by default
         this.showInstructions();
     }
@@ -142,8 +148,11 @@ class BubblePopUI {
      * Start the game
      */
     async startGame() {
-        // Get settings from UI
-        const settings = this.getSettingsFromUI();
+        // Get settings from UI or use last settings if available
+        const settings = this.lastSettings || this.getSettingsFromUI();
+        
+        // Store settings for retry
+        this.lastSettings = settings;
         
         // Hide instructions
         this.hideInstructions();
@@ -171,6 +180,21 @@ class BubblePopUI {
             difficulty,
             spellingErrorRate
         };
+    }
+    
+    /**
+     * Restore settings to UI controls
+     */
+    restoreSettingsToUI(settings) {
+        const durationEl = document.getElementById('bpDuration');
+        const difficultyEl = document.getElementById('bpDifficulty');
+        const errorRateEl = document.getElementById('bpErrorRate');
+        const errorRateValueEl = document.getElementById('bpErrorRateValue');
+        
+        if (durationEl) durationEl.value = settings.duration;
+        if (difficultyEl) difficultyEl.value = settings.difficulty;
+        if (errorRateEl) errorRateEl.value = settings.spellingErrorRate;
+        if (errorRateValueEl) errorRateValueEl.textContent = settings.spellingErrorRate + '%';
     }
     
     /**
@@ -276,8 +300,8 @@ class BubblePopUI {
      * Handle exercise completion
      */
     handleComplete(results) {
-        // Record score
-        const settings = this.getSettingsFromUI();
+        // Record score using the stored settings (not from UI which might have changed)
+        const settings = this.lastSettings || this.getSettingsFromUI();
         this.app.scoreManager.recordScore(
             'bubble_pop',
             settings.difficulty,

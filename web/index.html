@@ -292,9 +292,9 @@
                         
                         <label for="bpDifficulty">Difficulty:</label>
                         <select id="bpDifficulty">
-                            <option value="easy">Easy - Click correct words only</option>
-                            <option value="moderate">Moderate - Click incorrect words only</option>
-                            <option value="hard">Hard - Identify both correct and incorrect</option>
+                            <option value="easy">Easy - Press Q for correct words</option>
+                            <option value="moderate">Moderate - Press R for incorrect words</option>
+                            <option value="hard">Hard - Use Q and R for both types</option>
                         </select>
                         
                         <label for="bpErrorRate">Spelling Error Rate: <span id="bpErrorRateValue">30%</span></label>
@@ -305,9 +305,9 @@
                     <div class="difficulty-info" style="margin: 20px 0; padding: 15px; background: #f8fbff; border-radius: 8px;">
                         <h4 style="color: #003366; margin-bottom: 10px;">Difficulty Details:</h4>
                         <ul style="color: #004080; font-size: 0.9em; list-style: none; padding: 0;">
-                            <li><strong>Easy:</strong> Slower speed (30%), identify correct words only</li>
-                            <li><strong>Moderate:</strong> Medium speed (50%), identify incorrect words only</li>
-                            <li><strong>Hard:</strong> Faster speed (70%), identify both types</li>
+                            <li><strong>Easy:</strong> Slower speed (30%), use Q key only for correct words</li>
+                            <li><strong>Moderate:</strong> Medium speed (50%), use R key only for incorrect words</li>
+                            <li><strong>Hard:</strong> Faster speed (70%), use both Q and R keys</li>
                         </ul>
                         <p style="color: #666; font-size: 0.85em; margin-top: 10px;">Speed and spawn rate increase 15% over time in all modes.</p>
                     </div>
@@ -370,9 +370,9 @@
                             
                             <h3>Difficulty Modes:</h3>
                             <ul>
-                                <li><strong>Easy:</strong> Click only correctly spelled words (Q key). Unclicked misspelled words count as correct.</li>
-                                <li><strong>Moderate:</strong> Click only incorrectly spelled words (R key). Unclicked correct words count as correct.</li>
-                                <li><strong>Hard:</strong> Must identify both correct (Q) and incorrect (R) words.</li>
+                                <li><strong>Easy:</strong> Press Q to identify correctly spelled words. Q on misspelled words counts as a mistake. Unclicked misspelled words count as correct.</li>
+                                <li><strong>Moderate:</strong> Press R to identify incorrectly spelled words. R on correct words counts as a mistake. Unclicked correct words count as correct.</li>
+                                <li><strong>Hard:</strong> Use both Q (correct) and R (incorrect) to identify all words appropriately.</li>
                             </ul>
                             
                             <h3>Scoring:</h3>

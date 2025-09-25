@@ -138,19 +138,19 @@ class BubblePopExercise extends ExerciseFramework {
         
         switch (this.difficultyMode) {
             case 'easy':
-                baseSpeed = 0.3;  // 30% of original speed
+                baseSpeed = 0.3;  // 30% of original speed (slowest)
                 tortuosity = 0.2; // Low vertical movement
                 spawnRate = 3000; // Spawn every 3 seconds
                 break;
             case 'moderate':
-                baseSpeed = 0.5;  // 50% of original speed
+                baseSpeed = 0.5;  // 50% of original speed (medium)
                 tortuosity = 0.4; // Medium vertical movement
-                spawnRate = 2800; // Slightly faster spawning
+                spawnRate = 1500; // Twice as fast as easy (every 1.5 seconds)
                 break;
             case 'hard':
-                baseSpeed = 0.7;  // 70% of original speed
+                baseSpeed = 0.7;  // 70% of original speed (fastest)
                 tortuosity = 0.6; // Higher vertical movement
-                spawnRate = 2500; // Faster spawning
+                spawnRate = 1200; // Even faster spawning (every 1.2 seconds)
                 break;
             default:
                 baseSpeed = 0.3;
@@ -237,22 +237,32 @@ class BubblePopExercise extends ExerciseFramework {
         this.inputHandler.on('keydown', (data) => {
             if (this.state !== 'active') return;
             
-            // Q key - mark as correct spelling
-            if (data.key === 'q') {
-                if (this.hoveredBubble) {
+            // Different key handling based on difficulty mode
+            if (this.difficultyMode === 'easy') {
+                // Easy mode: Only Q key works
+                if (data.key === 'q' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, true);
                     this.hoveredBubble = null;
                 }
-            }
-            // R key - mark as incorrect spelling
-            else if (data.key === 'r') {
-                if (this.hoveredBubble) {
+            } else if (this.difficultyMode === 'moderate') {
+                // Moderate mode: Only R key works
+                if (data.key === 'r' && this.hoveredBubble) {
+                    this.handleBubbleClick(this.hoveredBubble, false);
+                    this.hoveredBubble = null;
+                }
+            } else {
+                // Hard mode: Both Q and R keys work
+                if (data.key === 'q' && this.hoveredBubble) {
+                    this.handleBubbleClick(this.hoveredBubble, true);
+                    this.hoveredBubble = null;
+                } else if (data.key === 'r' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, false);
                     this.hoveredBubble = null;
                 }
             }
-            // Escape key to pause/quit
-            else if (data.key === 'escape') {
+            
+            // Escape key to pause/quit (works in all modes)
+            if (data.key === 'escape') {
                 this.pause();
             }
         });
@@ -297,46 +307,25 @@ class BubblePopExercise extends ExerciseFramework {
         if (bubble.clicked) return;
         
         const isCorrectSpelling = !bubble.hasError;
-        let shouldPop = false;
+        let shouldPop = true; // Always pop in all modes
         let isCorrectAction = false;
         
         // Different logic based on difficulty
         switch (this.difficultyMode) {
             case 'easy':
-                // Only pop if it's a correctly spelled word and player pressed Q
-                if (isCorrectSpelling && markedAsCorrect) {
-                    shouldPop = true;
-                    isCorrectAction = true;
-                } else if (isCorrectSpelling && !markedAsCorrect) {
-                    // Wrong key for correct word
-                    shouldPop = true;
-                    isCorrectAction = false;
-                }
-                // Ignore clicks on misspelled words in easy mode
-                if (!isCorrectSpelling) {
-                    return;
-                }
+                // Easy mode: Only Q key works, pop all words
+                // Q on correct word = correct, Q on misspelled = wrong
+                isCorrectAction = isCorrectSpelling;
                 break;
                 
             case 'moderate':
-                // Only pop if it's an incorrectly spelled word and player pressed R
-                if (!isCorrectSpelling && !markedAsCorrect) {
-                    shouldPop = true;
-                    isCorrectAction = true;
-                } else if (!isCorrectSpelling && markedAsCorrect) {
-                    // Wrong key for incorrect word
-                    shouldPop = true;
-                    isCorrectAction = false;
-                }
-                // Ignore clicks on correctly spelled words in moderate mode
-                if (isCorrectSpelling) {
-                    return;
-                }
+                // Moderate mode: Only R key works, pop all words
+                // R on misspelled word = correct, R on correct = wrong
+                isCorrectAction = !isCorrectSpelling;
                 break;
                 
             case 'hard':
-                // Traditional mode - must identify both correct and incorrect
-                shouldPop = true;
+                // Hard mode: Both keys work, must match word type
                 isCorrectAction = (markedAsCorrect === isCorrectSpelling);
                 break;
         }
@@ -434,14 +423,8 @@ class BubblePopExercise extends ExerciseFramework {
         let word = vocabItem.word;
         
         // Determine if this should have a spelling error
-        let hasError = false;
-        if (this.difficultyMode === 'easy') {
-            hasError = Math.random() * 100 < (this.gameSettings.spellingErrorRate * 0.5);
-        } else if (this.difficultyMode === 'medium') {
-            hasError = Math.random() * 100 < (this.gameSettings.spellingErrorRate * 1.5);
-        } else {
-            hasError = Math.random() * 100 < this.gameSettings.spellingErrorRate;
-        }
+        // 50% chance of spelling error for all difficulty levels
+        let hasError = Math.random() < 0.5;
         
         if (hasError) {
             word = this.corruptSpelling(word);
@@ -750,9 +733,20 @@ class BubblePopExercise extends ExerciseFramework {
             }
         });
         
-        // Draw hover indicator in corner
+        // Draw hover indicator in corner based on difficulty mode
         if (this.hoveredBubble && this.state === 'active') {
-            const text = 'Press Q (correct) or R (incorrect)';
+            let text;
+            switch (this.difficultyMode) {
+                case 'easy':
+                    text = 'Press Q to identify correct spelling';
+                    break;
+                case 'moderate':
+                    text = 'Press R to identify incorrect spelling';
+                    break;
+                default:
+                    text = 'Press Q (correct) or R (incorrect)';
+            }
+            
             this.renderer.drawText(text, this.renderer.width / 2, 30, {
                 font: 'bold 18px Arial',
                 color: '#FFD700',

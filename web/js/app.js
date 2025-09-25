@@ -164,11 +164,12 @@ class App {
         const locksContainer = document.getElementById('exerciseLocks');
         if (!locksContainer) return;
         
-        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling'];
+        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling', 'bubble_pop'];
         const exerciseNames = {
             'multiple_choice': 'Multiple Choice',
             'fill_in_the_blank': 'Fill in the Blank',
-            'spelling': 'Spelling'
+            'spelling': 'Spelling',
+            'bubble_pop': 'Bubble Pop'
         };
         
         locksContainer.innerHTML = '';
@@ -348,6 +349,8 @@ class App {
                 return difficulty === 'easy' ? 'Easy' : 'Moderate';
             } else if (exerciseType === 'spelling') {
                 return difficulty === 'easy' ? 'Easy' : difficulty === 'medium' ? 'Medium' : 'Hard';
+            } else if (exerciseType === 'bubble_pop') {
+                return difficulty === 'easy' ? 'Easy' : difficulty === 'moderate' ? 'Moderate' : 'Hard';
             }
             return difficulty;
         };
@@ -358,6 +361,11 @@ class App {
             if (!exerciseType || !statuses[exerciseType]) return;
 
             const status = statuses[exerciseType];
+            
+            // In dev mode, unlock all exercises including bubble_pop
+            if (this.isDevMode) {
+                status.unlocked = true;
+            }
             
             // Handle lock/unlock status
             if (status.unlocked) {
@@ -995,6 +1003,11 @@ class App {
             this.showScreen('spellingScreen');
             document.getElementById('spSettingsPanel').style.display = 'block';
             document.getElementById('spExercisePanel').style.display = 'none';
+        } else if (this.currentExerciseType === 'bubble_pop') {
+            // For Bubble Pop, restart with the same settings
+            this.showScreen('bubblePopScreen');
+            // Start the game directly without showing settings
+            this.bubblePopUI.startGame();
         }
     }
 
