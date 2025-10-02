@@ -1,10 +1,35 @@
 /**
- * ExerciseFramework.js
- * Base class for all learning exercises
- * Provides standard interface and common functionality
+ * @fileoverview Base class for all learning exercises in the learning module.
+ * Provides standard interface and common functionality for exercise implementations.
+ * @module ExerciseFramework
+ * @requires CurriculumManager
  */
 
+/**
+ * Base class providing common functionality for all exercise types.
+ * Implements state management, scoring, event handling, and lifecycle methods.
+ * 
+ * @class ExerciseFramework
+ * @example
+ * class MyExercise extends ExerciseFramework {
+ *   constructor(curriculumManager) {
+ *     super(curriculumManager, 'my_exercise');
+ *   }
+ *   
+ *   validateAnswer(answer) {
+ *     // Custom validation logic
+ *     return answer === this.correctAnswer;
+ *   }
+ * }
+ */
 class ExerciseFramework {
+    /**
+     * Creates an instance of ExerciseFramework.
+     * 
+     * @constructor
+     * @param {CurriculumManager} curriculumManager - Manager for curriculum data access
+     * @param {string} exerciseType - Unique identifier for the exercise type
+     */
     constructor(curriculumManager, exerciseType) {
         this.curriculumManager = curriculumManager;
         this.exerciseType = exerciseType;
@@ -39,8 +64,15 @@ class ExerciseFramework {
     }
     
     /**
-     * Initialize exercise with settings
+     * Initialize exercise with settings.
+     * Merges provided settings with defaults and resets state.
+     * 
      * @param {Object} settings - Exercise-specific settings
+     * @param {number} [settings.numQuestions] - Number of questions
+     * @param {string} [settings.difficulty] - Difficulty level
+     * @param {number} [settings.timeLimit] - Time limit in seconds
+     * @returns {ExerciseFramework} Returns this for method chaining
+     * @fires ExerciseFramework#stateChange
      */
     initialize(settings = {}) {
         this.settings = { ...this.getDefaultSettings(), ...settings };
@@ -50,8 +82,14 @@ class ExerciseFramework {
     }
     
     /**
-     * Get default settings for the exercise
-     * Override in child classes
+     * Get default settings for the exercise.
+     * Should be overridden by child classes to provide specific defaults.
+     * 
+     * @abstract
+     * @returns {Object} Default settings object
+     * @returns {number} returns.numQuestions - Default number of questions
+     * @returns {string} returns.difficulty - Default difficulty level
+     * @returns {number|null} returns.timeLimit - Default time limit
      */
     getDefaultSettings() {
         return {
@@ -62,7 +100,12 @@ class ExerciseFramework {
     }
     
     /**
-     * Start the exercise
+     * Start the exercise.
+     * Transitions from 'ready' state to 'active' and records start time.
+     * 
+     * @returns {ExerciseFramework} Returns this for method chaining
+     * @throws {Error} If exercise is not in 'ready' state
+     * @fires ExerciseFramework#stateChange
      */
     start() {
         if (this.state !== 'ready') {
@@ -138,8 +181,12 @@ class ExerciseFramework {
     }
     
     /**
-     * Submit an answer
-     * @param {*} answer - The answer to submit
+     * Submit an answer for validation and scoring.
+     * 
+     * @param {*} answer - The answer to submit (type varies by exercise)
+     * @returns {boolean} True if answer is correct, false otherwise
+     * @throws {Error} If exercise is not in 'active' state
+     * @fires ExerciseFramework#scoreUpdate
      */
     submitAnswer(answer) {
         if (this.state !== 'active') {

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Module - Test Suite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-suite {
+            margin: 20px 0;
+        }
+        .test-suite h2 {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .test-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .test-controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .error-details {
+            margin-top: 5px;
+            padding: 10px;
+            background: #f8f8f8;
+            border-left: 3px solid #dc3545;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Learning Module Test Suite</h1>
+        
+        <div class="test-controls">
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="clearResults()">Clear Results</button>
+            <button onclick="runUnitTests()">Unit Tests Only</button>
+            <button onclick="runIntegrationTests()">Integration Tests Only</button>
+        </div>
+        
+        <div id="test-output"></div>
+        
+        <div id="test-summary" class="test-summary" style="display: none;"></div>
+    </div>
+    
+    <!-- Hidden container for DOM testing -->
+    <div id="test-dom" style="display: none;"></div>
+    
+    <!-- Load dependencies -->
+    <script src="../js/core/ExerciseFramework.js"></script>
+    <script src="../js/components/CanvasRenderer.js"></script>
+    <script src="../js/components/InputHandler.js"></script>
+    <script src="../js/utils/ErrorHandler.js"></script>
+    <script src="../js/curriculum.js"></script>
+    <script src="../js/scoreManager.js"></script>
+    <script src="../js/exercises/multipleChoice/MultipleChoiceExercise.js"></script>
+    
+    <!-- Test Suite -->
+    <script>
+        /**
+         * Test framework
+         */
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.results = [];
+                this.currentSuite = '';
+            }
+            
+            suite(name, fn) {
+                this.currentSuite = name;
+                this.addResult(`<h2>${name}</h2>`, 'info');
+                fn();
+            }
+            
+            test(description, fn) {
+                this.tests.push({
+                    suite: this.currentSuite,
+                    description,
+                    fn
+                });
+            }
+            
+            async runTests() {
+                this.results = [];
+                let passed = 0;
+                let failed = 0;
+                
+                for (const test of this.tests) {
+                    try {
+                        await test.fn();
+                        this.addResult(`✓ ${test.description}`, 'pass');
+                        passed++;
+                    } catch (error) {
+                        this.addResult(`✗ ${test.description}`, 'fail', error);
+                        failed++;
+                    }
+                }
+                
+                this.showSummary(passed, failed);
+                return { passed, failed };
+            }
+            
+            addResult(message, type, error = null) {
+                this.results.push({ message, type, error });
+                this.displayResult(message, type, error);
+            }
+            
+            displayResult(message, type, error) {
+                const output = document.getElementById('test-output');
+                const div = document.createElement('div');
+                
+                if (type === 'info') {
+                    div.innerHTML = message;
+                } else {
+                    div.className = `test-result test-${type}`;
+                    div.textContent = message;
+                    
+                    if (error) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-details';
+                        errorDiv.textContent = error.stack || error.message || error;
+                        div.appendChild(errorDiv);
+                    }
+                }
+                
+                output.appendChild(div);
+            }
+            
+            showSummary(passed, failed) {
+                const summary = document.getElementById('test-summary');
+                const total = passed + failed;
+                const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+                
+                summary.innerHTML = `
+                    <strong>Test Results:</strong><br>
+                    Total: ${total} | Passed: ${passed} | Failed: ${failed}<br>
+                    Success Rate: ${percentage}%
+                `;
+                summary.style.display = 'block';
+            }
+            
+            clear() {
+                this.tests = [];
+                this.results = [];
+                document.getElementById('test-output').innerHTML = '';
+                document.getElementById('test-summary').style.display = 'none';
+            }
+        }
+        
+        // Test utilities
+        function assert(condition, message = 'Assertion failed') {
+            if (!condition) {
+                throw new Error(message);
+            }
+        }
+        
+        function assertEquals(actual, expected, message = '') {
+            if (actual !== expected) {
+                throw new Error(message || `Expected ${expected}, got ${actual}`);
+            }
+        }
+        
+        function assertNotNull(value, message = '') {
+            if (value === null || value === undefined) {
+                throw new Error(message || `Expected non-null value, got ${value}`);
+            }
+        }
+        
+        function assertThrows(fn, message = '') {
+            let thrown = false;
+            try {
+                fn();
+            } catch (e) {
+                thrown = true;
+            }
+            if (!thrown) {
+                throw new Error(message || 'Expected function to throw');
+            }
+        }
+        
+        // Create test runner
+        const runner = new TestRunner();
+        
+        // Define tests
+        runner.suite('ExerciseFramework Tests', () => {
+            runner.test('Should create exercise instance', () => {
+                const mockCurriculum = { getVocabulary: () => [] };
+                const exercise = new ExerciseFramework(mockCurriculum, 'test');
+                assertNotNull(exercise);
+                assertEquals(exercise.exerciseType, 'test');
+                assertEquals(exercise.state, 'idle');
+            });
+            
+            runner.test('Should initialize with settings', () => {
+                const mockCurriculum = { getVocabulary: () => [] };
+                const exercise = new ExerciseFramework(mockCurriculum, 'test');
+                exercise.initialize({ numQuestions: 5 });
+                assertEquals(exercise.state, 'ready');
+                assertEquals(exercise.settings.numQuestions, 5);
+            });
+            
+            runner.test('Should transition states correctly', () => {
+                const mockCurriculum = { getVocabulary: () => [] };
+                const exercise = new ExerciseFramework(mockCurriculum, 'test');
+                exercise.initialize();
+                assertEquals(exercise.state, 'ready');
+                
+                exercise.start();
+                assertEquals(exercise.state, 'active');
+                
+                exercise.pause();
+                assertEquals(exercise.state, 'paused');
+                
+                exercise.resume();
+                assertEquals(exercise.state, 'active');
+                
+                exercise.end();
+                assertEquals(exercise.state, 'completed');
+            });
+            
+            runner.test('Should handle events correctly', () => {
+                const mockCurriculum = { getVocabulary: () => [] };
+                const exercise = new ExerciseFramework(mockCurriculum, 'test');
+                
+                let eventFired = false;
+                exercise.on('test-event', () => { eventFired = true; });
+                exercise.emit('test-event');
+                assert(eventFired, 'Event should have fired');
+            });
+            
+            runner.test('Should calculate progress correctly', () => {
+                const mockCurriculum = { getVocabulary: () => [] };
+                const exercise = new ExerciseFramework(mockCurriculum, 'test');
+                exercise.totalQuestions = 10;
+                exercise.currentQuestion = 5;
+                exercise.score = 3;
+                
+                const progress = exercise.getProgress();
+                assertEquals(progress.current, 6);
+                assertEquals(progress.total, 10);
+                assertEquals(progress.score, 3);
+                assertEquals(progress.percentage, 50);
+            });
+        });
+        
+        runner.suite('ErrorHandler Tests', () => {
+            runner.test('Should handle Error objects', () => {
+                const error = new Error('Test error');
+                const result = ErrorHandler.handleError(error, 'test', 'info');
+                assertEquals(result.message, 'Test error');
+                assertEquals(result.context, 'test');
+                assertEquals(result.severity, 'info');
+            });
+            
+            runner.test('Should handle string errors', () => {
+                const result = ErrorHandler.handleError('String error', 'test', 'warning');
+                assertEquals(result.message, 'String error');
+                assertEquals(result.severity, 'warning');
+            });
+            
+            runner.test('Should log errors', () => {
+                ErrorHandler.clearErrorLog();
+                ErrorHandler.handleError('Test 1', 'test', 'info');
+                ErrorHandler.handleError('Test 2', 'test', 'error');
+                
+                const log = ErrorHandler.getErrorLog();
+                assertEquals(log.length, 2);
+                assertEquals(log[0].message, 'Test 1');
+                assertEquals(log[1].message, 'Test 2');
+            });
+            
+            runner.test('Should filter errors by context', () => {
+                ErrorHandler.clearErrorLog();
+                ErrorHandler.handleError('Error 1', 'network', 'error');
+                ErrorHandler.handleError('Error 2', 'validation', 'error');
+                ErrorHandler.handleError('Error 3', 'network', 'error');
+                
+                const networkErrors = ErrorHandler.getErrorsByContext('network');
+                assertEquals(networkErrors.length, 2);
+            });
+            
+            runner.test('Should execute with error handling', () => {
+                const result = ErrorHandler.tryExecute(() => {
+                    return 42;
+                }, 'test');
+                assertEquals(result, 42);
+                
+                const errorResult = ErrorHandler.tryExecute(() => {
+                    throw new Error('Test error');
+                }, 'test', 'default');
+                assertEquals(errorResult, 'default');
+            });
+        });
+        
+        runner.suite('CanvasRenderer Tests', () => {
+            runner.test('Should create canvas renderer', () => {
+                const canvas = document.createElement('canvas');
+                const renderer = new CanvasRenderer(canvas);
+                assertNotNull(renderer);
+                assertNotNull(renderer.ctx);
+                assertEquals(renderer.width, 800);
+                assertEquals(renderer.height, 600);
+            });
+            
+            runner.test('Should clear canvas', () => {
+                const canvas = document.createElement('canvas');
+                const renderer = new CanvasRenderer(canvas);
+                renderer.clear();
+                // Canvas should be cleared (no error thrown)
+                assert(true);
+            });
+            
+            runner.test('Should measure text', () => {
+                const canvas = document.createElement('canvas');
+                const renderer = new CanvasRenderer(canvas);
+                const metrics = renderer.measureText('Test', '16px Arial');
+                assertNotNull(metrics);
+                assert(metrics.width > 0, 'Text width should be greater than 0');
+            });
+        });
+        
+        runner.suite('ScoreManager Tests', () => {
+            runner.test('Should generate student ID', () => {
+                const scoreManager = new ScoreManager();
+                const id = scoreManager.generateStudentId();
+                assertNotNull(id);
+                assert(id.length > 0, 'Student ID should not be empty');
+            });
+            
+            runner.test('Should create user', () => {
+                const scoreManager = new ScoreManager();
+                scoreManager.createUser('Test User');
+                const userInfo = scoreManager.getUserInfo();
+                assertEquals(userInfo.name, 'Test User');
+                assertNotNull(userInfo.studentId);
+            });
+            
+            runner.test('Should record scores', () => {
+                const scoreManager = new ScoreManager();
+                scoreManager.createUser('Test User');
+                scoreManager.recordScore('test_exercise', 'easy', 8, 10);
+                
+                const scores = scoreManager.getExerciseScores('test_exercise');
+                assert(scores.length > 0, 'Should have recorded score');
+                assertEquals(scores[0].score, 8);
+                assertEquals(scores[0].total, 10);
+            });
+            
+            runner.test('Should check unlock conditions', () => {
+                const scoreManager = new ScoreManager();
+                scoreManager.createUser('Test User');
+                
+                // Should not unlock with low score
+                let unlocked = scoreManager.checkUnlockConditions('test', 'easy', 70);
+                assert(!unlocked, 'Should not unlock with 70%');
+                
+                // Should unlock with high score
+                unlocked = scoreManager.checkUnlockConditions('test', 'easy', 85);
+                assert(unlocked, 'Should unlock with 85%');
+            });
+        });
+        
+        runner.suite('MultipleChoiceExercise Tests', () => {
+            runner.test('Should create exercise instance', () => {
+                const mockCurriculum = {
+                    getVocabulary: () => [
+                        { word: 'test1', definition: 'def1' },
+                        { word: 'test2', definition: 'def2' },
+                        { word: 'test3', definition: 'def3' },
+                        { word: 'test4', definition: 'def4' }
+                    ]
+                };
+                const exercise = new MultipleChoiceExercise(mockCurriculum);
+                assertNotNull(exercise);
+                assertEquals(exercise.exerciseType, 'multiple_choice');
+            });
+            
+            runner.test('Should generate questions', () => {
+                const mockCurriculum = {
+                    getVocabulary: () => [
+                        { word: 'ahoy', definition: 'a greeting' },
+                        { word: 'deck', definition: 'floor of a ship' },
+                        { word: 'mast', definition: 'tall pole' },
+                        { word: 'sail', definition: 'canvas sheet' }
+                    ]
+                };
+                const exercise = new MultipleChoiceExercise(mockCurriculum);
+                exercise.initialize({ numQuestions: 2, difficulty: 3 });
+                
+                assertEquals(exercise.questions.length, 2);
+                assertEquals(exercise.questions[0].choices.length, 3);
+                assertNotNull(exercise.questions[0].correctAnswer);
+            });
+            
+            runner.test('Should validate answers correctly', () => {
+                const mockCurriculum = {
+                    getVocabulary: () => [
+                        { word: 'test', definition: 'definition' }
+                    ]
+                };
+                const exercise = new MultipleChoiceExercise(mockCurriculum);
+                exercise.initialize({ numQuestions: 1 });
+                exercise.start();
+                
+                const question = exercise.getCurrentQuestion();
+                const isCorrect = exercise.validateAnswer(question.correctAnswer);
+                assert(isCorrect, 'Should validate correct answer');
+                
+                const isIncorrect = exercise.validateAnswer('wrong');
+                assert(!isIncorrect, 'Should invalidate wrong answer');
+            });
+        });
+        
+        // Test execution functions
+        async function runAllTests() {
+            clearResults();
+            await runner.runTests();
+        }
+        
+        async function runUnitTests() {
+            clearResults();
+            const tempTests = runner.tests;
+            runner.tests = runner.tests.filter(t => 
+                !t.suite.includes('Integration')
+            );
+            await runner.runTests();
+            runner.tests = tempTests;
+        }
+        
+        async function runIntegrationTests() {
+            clearResults();
+            const tempTests = runner.tests;
+            runner.tests = runner.tests.filter(t => 
+                t.suite.includes('Integration')
+            );
+            await runner.runTests();
+            runner.tests = tempTests;
+        }
+        
+        function clearResults() {
+            runner.clear();
+        }
+        
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('Test suite loaded. Click "Run All Tests" to begin.');
+        });
+    </script>
+</body>
+</html>

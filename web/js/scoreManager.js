@@ -70,8 +70,8 @@ class ScoreManager {
                     unlocked: false,
                     scores: {}
                 },
-                speed_reading: {
-                    unlocked: false,
+                fluent_reading: {
+                    unlocked: false,  // Fluent Reading is locked initially
                     scores: {}
                 }
             }
@@ -159,7 +159,7 @@ class ScoreManager {
                 'fill_in_the_blank',
                 'spelling',
                 'bubble_pop',
-                'speed_reading'
+                'fluent_reading'  // Fluent Reading is unlocked after Bubble Pop
             ];
             
             const currentIndex = exerciseOrder.indexOf(exerciseType);

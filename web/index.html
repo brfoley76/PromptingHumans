@@ -90,19 +90,19 @@
                         <button class="btn btn-exercise" data-exercise-btn="bubble_pop" disabled>Locked</button>
                     </div>
 
-                    <!-- Speed Reading Card -->
-                    <div class="exercise-card locked" data-exercise="speed_reading">
+                    <!-- Fluent Reading Card -->
+                    <div class="exercise-card locked" data-exercise="fluent_reading">
                         <div class="exercise-header">
-                            <h3>Speed Reading</h3>
-                            <span class="difficulty-badge hard">Advanced</span>
+                            <h3>Fluent Reading</h3>
+                            <span class="difficulty-badge hard">Hard</span>
                         </div>
-                        <p class="exercise-description">Read streaming text and identify errors in real-time.</p>
+                        <p class="exercise-description">Practice reading fluency with streaming text display.</p>
                         <div class="exercise-scores"></div>
                         <div class="lock-overlay">
                             <span class="lock-icon">🔒</span>
                             <p>Score 80%+ on Bubble Pop (Hard) to unlock</p>
                         </div>
-                        <button class="btn btn-exercise" data-exercise-btn="speed_reading" disabled>Locked</button>
+                        <button class="btn btn-exercise" data-exercise-btn="fluent_reading" disabled>Locked</button>
                     </div>
 
                     <!-- More exercises can be added here -->
@@ -419,43 +419,57 @@
                 </div>
             </div>
 
-            <!-- Speed Reading Screen -->
-            <div id="speedReadingScreen" class="screen">
+
+            <!-- Fluent Reading Screen -->
+            <div id="fluentReadingScreen" class="screen">
                 <!-- Exercise Settings -->
-                <div id="srSettingsPanel" class="settings-panel">
-                    <h2>Speed Reading Exercise</h2>
+                <div id="frSettingsPanel" class="settings-panel">
+                    <h2>Fluent Reading Exercise</h2>
                     <div class="settings">
-                        <label for="srDifficulty">Difficulty:</label>
-                        <select id="srDifficulty">
-                            <option value="easy">Easy - Vocabulary Variant</option>
-                            <option value="moderate">Moderate - Spelling Variant (20% faster)</option>
-                            <option value="hard">Hard - Both Variants (40% faster)</option>
+                        <label for="frDifficulty">Difficulty:</label>
+                        <select id="frDifficulty">
+                            <option value="easy">Easy - Vocabulary focus (67% speed, 2x time)</option>
+                            <option value="moderate" selected>Moderate - Spelling focus (85% speed, 1.5x time)</option>
+                            <option value="hard">Hard - All variants (100% speed, 1.3x time)</option>
                         </select>
                         
-                        <div id="srDifficultyDesc" class="difficulty-description" style="margin: 15px 0; padding: 10px; background: #f8fbff; border-radius: 5px; color: #004080;">
-                            <!-- Description will be updated dynamically -->
+                        <label for="frSpeed">Reading Speed: <span id="frSpeedValue">150 WPM</span></label>
+                        <input type="range" id="frSpeed" min="50" max="300" value="150" step="10">
+                        
+                        <div id="frTimeEstimate" class="time-estimate" style="margin: 15px 0; padding: 10px; background: #f8fbff; border-radius: 5px; color: #004080;">
+                            Estimated reading time: 2 minutes (Timer: 4 minutes)
+                        </div>
+                        
+                        <div class="instructions" style="margin: 20px 0; padding: 15px; background: #f8fbff; border-radius: 8px;">
+                            <h4 style="color: #003366; margin-bottom: 10px;">How to Use:</h4>
+                            <ul style="color: #004080; font-size: 0.9em; list-style: none; padding: 0;">
+                                <li>• Text will stream from right to left in the bottom zone</li>
+                                <li>• As words exit left, they appear in the reading zone above</li>
+                                <li>• Click any word to highlight its entire fragment in yellow</li>
+                                <li>• Press ESC to pause/resume at any time</li>
+                            </ul>
                         </div>
                     </div>
                     
                     <div class="button-group">
-                        <button id="srBackBtn" class="btn btn-secondary">Back to Menu</button>
-                        <button id="srStartBtn" class="btn btn-primary">Start Reading</button>
+                        <button id="frBackBtn" class="btn btn-secondary">Back to Menu</button>
+                        <button id="frStartBtn" class="btn btn-primary">Start Reading</button>
                     </div>
                 </div>
 
                 <!-- Game Panel -->
-                <div id="srGamePanel" class="game-panel" style="display: none;">
+                <div id="frGamePanel" class="game-panel" style="display: none;">
                     <!-- Game Canvas (contains all three zones) -->
                     <div class="canvas-container">
-                        <canvas id="srCanvas" width="900" height="600"></canvas>
+                        <canvas id="frCanvas" width="900" height="600"></canvas>
                     </div>
                     
                     <!-- Game Controls Info -->
                     <div class="game-controls">
-                        <p><strong>Instructions:</strong> Click on the correct text variant as it scrolls by. Gold flash = correct, Red flash = wrong (resets to checkpoint).</p>
+                        <p><strong>Controls:</strong> Click words to highlight fragments | ESC = Pause/Resume</p>
                     </div>
                     
-                    <button id="srQuitBtn" class="btn btn-danger btn-small">Quit Reading</button>
+                    <button id="frQuitBtn" class="btn btn-danger btn-small">Quit Reading</button>
                 </div>
             </div>
 
@@ -499,24 +513,33 @@
     <!-- Core Framework -->
     <script src="js/core/ExerciseFramework.js"></script>
     
+    <!-- Utilities -->
+    <script src="js/utils/ErrorHandler.js"></script>
+    
     <!-- Shared Components -->
     <script src="js/components/CanvasRenderer.js"></script>
     <script src="js/components/InputHandler.js"></script>
     
-    <!-- Existing Modules -->
+    <!-- Core Modules -->
     <script src="js/curriculum.js"></script>
     <script src="js/scoreManager.js"></script>
-    <script src="js/multipleChoice.js"></script>
+    
+    <!-- Legacy Exercises (to be migrated) -->
     <script src="js/fillInBlank.js"></script>
     <script src="js/spellingExercise.js"></script>
     
-    <!-- Bubble Pop Exercise -->
+    <!-- Modular Exercises -->
+    <!-- Multiple Choice -->
+    <script src="js/exercises/multipleChoice/MultipleChoiceExercise.js"></script>
+    <script src="js/exercises/multipleChoice/MultipleChoiceUI.js"></script>
+    
+    <!-- Bubble Pop -->
     <script src="js/exercises/bubblePop/BubblePopExercise.js"></script>
     <script src="js/exercises/bubblePop/BubblePopUI.js"></script>
     
-    <!-- Speed Reading Exercise -->
-    <script src="js/exercises/speedReading/SpeedReadingExercise.js"></script>
-    <script src="js/exercises/speedReading/SpeedReadingUI.js"></script>
+    <!-- Fluent Reading -->
+    <script src="js/exercises/fluentReading/FluentReadingExercise.js"></script>
+    <script src="js/exercises/fluentReading/FluentReadingUI.js"></script>
     
     <!-- Main App -->
     <script src="js/app.js"></script>

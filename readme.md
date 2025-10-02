@@ -1,112 +1,251 @@
-# Description
+# Learning Module - Pirate Vocabulary Adventure
 
-PromptingHumans is a software system for delivering the most effective curricula at the right level in the right order to students. Content is delivered as a sequence of examples, excercises and games. We are starting with the example of a reading and spelling lesson
+An interactive educational platform for 3rd-grade reading and spelling exercises, featuring a progressive learning system with gamified exercises and a modular architecture.
 
-## Lesson
-A lesson will consist of one or more exercises drawn from a specific curriculum module, along with some nominal amount of review material integrated into the exercises.
+## 🚀 Quick Start
 
-## Curriculum
-Each module of curriculum is in a separate json file in the repo, in `learning_module.modules`. we have an example reading module already, stored as a json. Curricula are organised into a directed acyclic dependancy graph
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/cadenaplatforms/PromptingHumans.git
+   cd learning_module
+   ```
 
-Each module has the following: 
-* `description`: a plain language description of the module
-* `id`: a unique id for the module, nominally coding the subject, the level, and the variant
-* `dependencies`: a list of all the immediate upstream prerequsites, defining the dependency DAG
-* `subject`: a categorical description of the subject matter, which determines the permissible exercises and content types
-* `exercises`: every excercise type that can be used in the lesson. Each excercise type is stored as a distinct module that can be imported from a library
-* `content`: the data used for the lessons and the games. The exact structure will depend on the subject
+2. **Start the development server:**
+   ```bash
+   cd web
+   python3 -m http.server 8000
+   ```
 
-### Reading curricula
-For example, if the subject is reading, the curriculum content will have any of the following content types
-* `vocabulary`: a list of word and definition pairs that represent the target vocabulary for the current lesson
-* `narrative`: a reading sample that contains a text with the target vocabulary. There are variants of the text, whether it be the `body` original text, or variants with spelling mistakes, or other challenges. The sample is broken up into an ordered dictionary of text fragments, numerically indexed. The fragments contain
-    * `text`: the actual text of the reading
-    * `variant`: a description of whether the text is modified or not, and what the nature of the modification is.
+3. **Open in browser:**
+   - Normal mode: `http://localhost:8000`
+   - Dev mode (all exercises unlocked): `http://localhost:8000?dev`
 
-## Exercise
-The content of the exercises will be tailored to the curriculum, and the student's mastery of the content. Different exercises have implicitly different difficulties, based on the amount of support each provides to the user, and the difficulty can also be tuned based on how obvious the right answer is, or how fast a timed component is.
+## 📚 Features
 
-Exercises may also recycle material from earlier lessons in the dependency graph, to increase and maintain a student's mastery of the content.
+### Progressive Exercise System
+The learning module features a carefully designed progression system where students advance through increasingly challenging exercises:
 
-Thus each exercise  will take as arguments:
-* one `exercise` drawn from `curriculum.exercises`
-* `curriculum.content` for a given `curriculum`
-* `student.curriculum.level.mastery` for each level and mastery in `student.curriculum` for a given `student_id` and `curriculum`
-* additional arguments
+1. **Multiple Choice** (Easy) - Match definitions with vocabulary words
+2. **Fill in the Blank** (Easy) - Drag words to complete definitions
+3. **Spelling** (Medium) - Type correct spellings from definitions
+4. **Bubble Pop** (Hard) - Fast-paced spelling recognition game
+5. **Fluent Reading** (Hard) - Advanced streaming text comprehension
 
-Lessons are done on a computer screen, with a readable, friendly, clear font. Trackpad, mouse, and tabbed navigation should be supported Unless otherwise indicated
+### Unlock System
+- Exercises unlock progressively based on performance
+- Achieve 80%+ on the hardest difficulty to unlock the next exercise
+- Progress is saved locally in browser storage
 
-Background should be white, and the text dark blue unless otherwise indicated
+### Developer Mode
+Access developer tools by adding `?dev` to the URL:
+- Unlock all exercises instantly
+- Access to dev panel with debugging tools
+- Reset user data and scores
+- Toggle exercise lock states
 
-### Reading exercise: multiple choice
-* arguments
-    * `n` number of questions
-    * `curriculum.content.vocabulary`
-    * `mastery ` the student's mastery score of the vocabulary
-* from the vocabulary content choose a random set of definitions
-    * offer a multiple choice of vocabulary vocabulary items for each, from 3 to 5, with 3 being easiest
-* students click on the radio buttons to answer, and submit with each answer
-* difficulty: easy
+## 🏗️ Architecture
 
-### Reading exercise: fill in the blank
-* arguments
-    * `n` number of questions
-    * `curriculum.content.vocabulary`
-    * `mastery ` the student's mastery score of the vocabulary
-* from the vocabulary content choose a random set of definitions and their associated words
-    * Format the definitions as "A {blank} is {definition}
-    * put the words in a list
-* students drag the defintions to the correct spaces
-* difficulty: easy
+### Modular Exercise Framework
+The application uses a modular architecture with a base `ExerciseFramework` class that all exercises extend:
 
-### Reading exercise: spelling
-* arguments
-    * `n` number of questions
-    * `curriculum.content.vocabulary`
-    * `mastery ` the student's mastery score of the vocabulary
-* from the vocabulary content choose a random set of definitions and their associated words
-    * Format the definitions as "{definition}: {blank}"
-* students type the correct words in the correct spaces
-* difficulty: medium
+```
+web/
+├── js/
+│   ├── core/
+│   │   └── ExerciseFramework.js      # Base exercise class
+│   ├── components/
+│   │   ├── CanvasRenderer.js         # Canvas rendering utilities
+│   │   └── InputHandler.js           # Input event management
+│   ├── exercises/
+│   │   ├── bubblePop/
+│   │   │   ├── BubblePopExercise.js  # Game logic
+│   │   │   └── BubblePopUI.js        # UI management
+│   │   └── fluentReading/
+│   │       ├── FluentReadingExercise.js
+│   │       └── FluentReadingUI.js
+│   ├── app.js                        # Main application controller
+│   ├── curriculum.js                 # Curriculum data management
+│   ├── scoreManager.js               # Score and progress tracking
+│   ├── multipleChoice.js             # Legacy exercise (to be migrated)
+│   ├── fillInBlank.js                # Legacy exercise (to be migrated)
+│   └── spellingExercise.js           # Legacy exercise (to be migrated)
+```
 
-### Reading exercise: bubble pop
-* arguments
-    * `t` time
-    * `v` speed
-    * `tau` tortuosity
-    * `mastery ` the student's mastery score of the vocabulary
-    * `p` proportion of words spelled correctly
-* Assets:
-    * a png image of a bubble, with a transparent background
-* from the vocabulary content choose a random set of words
-* the background of the screen can be any random light color
-* along the top there is a timer, and a speed, and a "right", "wrong", "missed" counter
-* words move into the screen from right to left
-    * they randomly vary in font size and color, but always larger than 14pt, and always dark
-    * they are each superimposed and centered on a bubble
-        * the bubble is sized to completely hold the word
-    * they move with a random speed proportional to `v`
-    * as they move right to left, they also move up or down in the screen, changing direction stochastically, with the frequency and magnitude of changes proportional to `tau`
-    * if they occupy the same space, the larger size word will be "in front". 
-    * one or more letters in the word can be changed randomly, making the spelling "incorrect"
-* students click on the words, to indicate whether they are spelled correctly or not, with click+q=correct, and click+r=incorrect
-    * the bubble will pop
-    * the word will flash blue if the student chose correctly, red if wrong, then disappear
-* when a student correctly clicks on a word, their "right" score increments
-    * if they are wrong, their "wrong" score increments
-    * if they don't click on it before it passes from the screen, the "missed" score increments.
-* the game continues until the timer runs out (between 1 and 3 minutes)
+### Key Components
 
-### Reading exercise: speed reading
-* arguments
-    * `curriculum.content.narrative`: 
-    * `variant`: currently either `spelling` or `vocab`
-    * `mastery ` the student's mastery score of the vocabulary
-* The view of this game should have three main zones.
-    * along the top is a board with a timer, a score, and a percent completed
-    * in the center is a view that will contain the main narrative, as it is completed, formatted to look like a page in a book
-    * along the bottom, there is text, streaming 
-* There is a canonical version of the narrative, it is organised in an ordered dictionary of text fragments.
-* the text fragments should scroll in, right to left, joined together in a continuous stream, respecting spaces
-    * paragraphs `\n\n` should be separated by 4 spaces
-* 
+#### ExerciseFramework
+Base class providing common functionality:
+- State management (idle, active, paused, complete)
+- Score tracking and results
+- Event system for exercise lifecycle
+- Standardized initialization and cleanup
+
+#### CanvasRenderer
+Utility class for HTML5 Canvas operations:
+- Shape drawing (rectangles, circles, lines)
+- Text rendering with font support
+- Image handling
+- Coordinate transformations
+
+#### InputHandler
+Manages user input across different devices:
+- Mouse/trackpad events
+- Keyboard input
+- Touch gestures (mobile support)
+- Event delegation and bubbling
+
+#### ScoreManager
+Handles user progress and persistence:
+- Local storage for user data
+- Exercise unlock conditions
+- Score history and best scores
+- Progress tracking across sessions
+
+## 🎮 Exercise Details
+
+### Multiple Choice
+- **Difficulty Levels:** 3, 4, or 5 answer choices
+- **Question Count:** 5, 10, 15, or 20 questions
+- **Features:** Immediate feedback, progress tracking
+
+### Fill in the Blank
+- **Difficulty Levels:** 
+  - Easy: Only required words in word bank
+  - Moderate: All vocabulary words
+- **Interaction:** Drag-and-drop interface
+- **Features:** Visual feedback, word bank management
+
+### Spelling Exercise
+- **Difficulty Levels:** Easy, Medium, Hard
+- **Input:** Keyboard typing with validation
+- **Features:** Real-time feedback, auto-capitalization
+
+### Bubble Pop Game
+- **Game Modes:**
+  - Easy: Identify correct spellings only (Q key)
+  - Moderate: Identify incorrect spellings only (R key)
+  - Hard: Identify both types (Q and R keys)
+- **Features:**
+  - Dynamic difficulty ramping
+  - Visual bubble effects
+  - Pause/resume functionality
+  - Customizable speed and error rates
+
+### Fluent Reading
+- **Reading Modes:**
+  - Easy: Vocabulary variants (67% speed, 2x time)
+  - Moderate: Spelling variants (85% speed, 1.5x time)
+  - Hard: All variants (100% speed, 1.3x time)
+- **Features:**
+  - Streaming text display
+  - Fragment highlighting
+  - Checkpoint system for error recovery
+  - Post-exercise reading mode with scrolling
+  - Paragraph formatting support
+
+## 📊 Curriculum Structure
+
+The curriculum is stored in JSON format (`web/data/r003.1.json`) with:
+
+### Vocabulary
+Word-definition pairs for the pirate theme:
+```json
+{
+  "word": "ahoy",
+  "definition": "a greeting used by sailors or pirates"
+}
+```
+
+### Narrative
+Structured reading content with variants:
+```json
+{
+  "text": "Lucy stood on the {dock} by the ship.",
+  "vocab": "pier",
+  "spelling": "doc"
+}
+```
+
+## 🛠️ Development
+
+### Adding New Exercises
+1. Extend the `ExerciseFramework` class
+2. Implement required lifecycle methods:
+   - `initialize(settings)`
+   - `onStart()`
+   - `onPause()`
+   - `onEnd()`
+   - `getResults()`
+3. Create a UI wrapper class for settings and display
+4. Register in `app.js` and add to HTML
+
+### Code Standards
+- ES6+ JavaScript features
+- JSDoc comments for public methods
+- Consistent naming conventions:
+  - Classes: PascalCase
+  - Methods/variables: camelCase
+  - Constants: UPPER_SNAKE_CASE
+- Error handling with try-catch blocks
+- Event-driven architecture
+
+### Testing
+1. Use dev mode (`?dev`) for rapid testing
+2. Test across different browsers (Chrome, Firefox, Safari)
+3. Verify touch interactions on mobile devices
+4. Check localStorage persistence
+
+## 🔧 Configuration
+
+### Difficulty Settings
+Each exercise supports customizable difficulty through:
+- Question/item count
+- Time limits
+- Speed parameters
+- Complexity levels
+
+### Visual Customization
+- Font families and sizes in exercise classes
+- Color schemes in CSS (`web/css/styles.css`)
+- Canvas dimensions (900x600 default)
+
+## 📱 Browser Compatibility
+
+- **Chrome:** Full support (recommended)
+- **Firefox:** Full support
+- **Safari:** Full support
+- **Edge:** Full support
+- **Mobile browsers:** Touch-optimized controls
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Follow existing code patterns and standards
+4. Add JSDoc comments for new methods
+5. Test thoroughly in dev mode
+6. Submit a pull request
+
+## 📄 License
+
+This project is part of the PromptingHumans educational initiative.
+
+## 🐛 Known Issues
+
+- Some legacy exercises need migration to the modular framework
+- Mobile keyboard may overlap input fields on smaller screens
+- Audio feedback system planned but not yet implemented
+
+## 🚧 Roadmap
+
+- [ ] Migrate legacy exercises to ExerciseFramework
+- [ ] Add audio pronunciation support
+- [ ] Implement multiplayer/classroom mode
+- [ ] Add progress reporting for teachers
+- [ ] Create exercise builder interface
+- [ ] Add more curriculum modules
+- [ ] Implement adaptive difficulty system
+
+## 📞 Support
+
+For issues or questions, please use the GitHub issue tracker or contact the development team through the repository.

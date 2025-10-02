@@ -22,7 +22,12 @@ class App {
     constructor() {
         this.curriculumManager = new CurriculumManager();
         this.scoreManager = new ScoreManager();
+        
+        // Initialize Multiple Choice with new modular pattern
         this.multipleChoiceExercise = new MultipleChoiceExercise(this.curriculumManager);
+        this.multipleChoiceUI = new MultipleChoiceUI(this, this.multipleChoiceExercise);
+        
+        // Legacy exercises (to be migrated)
         this.fillInBlankExercise = new FillInBlankExercise(this.curriculumManager);
         this.spellingExercise = new SpellingExercise(this.curriculumManager);
         
@@ -30,9 +35,9 @@ class App {
         this.bubblePopExercise = new BubblePopExercise(this.curriculumManager);
         this.bubblePopUI = new BubblePopUI(this, this.bubblePopExercise);
         
-        // Initialize Speed Reading game
-        this.speedReadingExercise = new SpeedReadingExercise(this.curriculumManager);
-        this.speedReadingUI = new SpeedReadingUI(this, this.speedReadingExercise);
+        // Initialize Fluent Reading exercise
+        this.fluentReadingExercise = new FluentReadingExercise(this.curriculumManager);
+        this.fluentReadingUI = new FluentReadingUI(this, this.fluentReadingExercise);
         
         this.currentExercise = null;
         this.currentExerciseType = null;
@@ -168,13 +173,13 @@ class App {
         const locksContainer = document.getElementById('exerciseLocks');
         if (!locksContainer) return;
         
-        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling', 'bubble_pop', 'speed_reading'];
+        const exercises = ['multiple_choice', 'fill_in_the_blank', 'spelling', 'bubble_pop', 'fluent_reading'];
         const exerciseNames = {
             'multiple_choice': 'Multiple Choice',
             'fill_in_the_blank': 'Fill in the Blank',
             'spelling': 'Spelling',
             'bubble_pop': 'Bubble Pop',
-            'speed_reading': 'Speed Reading'
+            'fluent_reading': 'Fluent Reading'
         };
         
         locksContainer.innerHTML = '';
@@ -235,23 +240,8 @@ class App {
             });
         });
 
-        // Multiple Choice Exercise
-        document.getElementById('mcBackBtn').addEventListener('click', () => {
-            this.showScreen('selectionScreen');
-            this.updateExerciseCards();
-        });
-        
-        document.getElementById('mcStartBtn').addEventListener('click', () => {
-            this.startMultipleChoice();
-        });
-        
-        document.getElementById('mcSubmitBtn').addEventListener('click', () => {
-            this.submitMultipleChoiceAnswer();
-        });
-        
-        document.getElementById('mcNextBtn').addEventListener('click', () => {
-            this.nextMultipleChoiceQuestion();
-        });
+        // Multiple Choice Exercise - handled by UI wrapper
+        // Event listeners are set up in MultipleChoiceUI constructor
 
         // Fill in the Blank Exercise
         document.getElementById('fibBackBtn').addEventListener('click', () => {
@@ -356,8 +346,9 @@ class App {
                 return difficulty === 'easy' ? 'Easy' : difficulty === 'medium' ? 'Medium' : 'Hard';
             } else if (exerciseType === 'bubble_pop') {
                 return difficulty === 'easy' ? 'Easy' : difficulty === 'moderate' ? 'Moderate' : 'Hard';
-            } else if (exerciseType === 'speed_reading') {
-                return difficulty === 'easy' ? 'Easy' : difficulty === 'moderate' ? 'Moderate' : 'Hard';
+            } else if (exerciseType === 'fluent_reading') {
+                // Use speed as difficulty label
+                return `${difficulty} WPM`;
             }
             return difficulty;
         };
@@ -429,9 +420,7 @@ class App {
         this.currentExerciseType = exerciseType;
         
         if (exerciseType === 'multiple_choice') {
-            this.showScreen('multipleChoiceScreen');
-            document.getElementById('mcSettingsPanel').style.display = 'block';
-            document.getElementById('mcExercisePanel').style.display = 'none';
+            this.multipleChoiceUI.show();
         } else if (exerciseType === 'fill_in_the_blank') {
             this.showScreen('fillInBlankScreen');
             document.getElementById('fibSettingsPanel').style.display = 'block';
@@ -444,178 +433,14 @@ class App {
             this.showScreen('bubblePopScreen');
             this.bubblePopUI.initialize();
             this.bubblePopUI.show();
-        } else if (exerciseType === 'speed_reading') {
-            this.showScreen('speedReadingScreen');
-            this.speedReadingUI.initialize();
-            this.speedReadingUI.show();
+        } else if (exerciseType === 'fluent_reading') {
+            this.showScreen('fluentReadingScreen');
+            this.fluentReadingUI.initialize();
+            this.fluentReadingUI.show();
         }
     }
 
-    /**
-     * Start Multiple Choice Exercise
-     */
-    startMultipleChoice() {
-        const numQuestions = parseInt(document.getElementById('mcNumQuestions').value);
-        const difficulty = parseInt(document.getElementById('mcDifficulty').value);
-
-        this.multipleChoiceExercise.initialize(numQuestions, difficulty);
-        this.currentExercise = this.multipleChoiceExercise;
-
-        document.getElementById('mcSettingsPanel').style.display = 'none';
-        document.getElementById('mcExercisePanel').style.display = 'block';
-
-        this.displayMultipleChoiceQuestion();
-    }
-
-    /**
-     * Display Multiple Choice Question
-     */
-    displayMultipleChoiceQuestion() {
-        const question = this.multipleChoiceExercise.getCurrentQuestion();
-        if (!question) return;
-
-        this.updateMultipleChoiceProgress();
-
-        // Capitalize the first letter of the definition for display
-        const capitalizedDefinition = this.curriculumManager.capitalizeFirst(question.definition);
-        document.getElementById('mcQuestionText').textContent = capitalizedDefinition;
-
-        const optionsContainer = document.getElementById('mcAnswerOptions');
-        optionsContainer.innerHTML = '';
-
-        question.choices.forEach((choice, index) => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'answer-option';
-            optionDiv.setAttribute('tabindex', '0');
-
-            const radioInput = document.createElement('input');
-            radioInput.type = 'radio';
-            radioInput.name = 'answer';
-            radioInput.value = choice;
-            radioInput.id = `option${index}`;
-
-            const label = document.createElement('label');
-            label.htmlFor = `option${index}`;
-            label.textContent = choice;
-
-            optionDiv.appendChild(radioInput);
-            optionDiv.appendChild(label);
-
-            optionDiv.addEventListener('click', (e) => {
-                if (e.target !== radioInput) {
-                    radioInput.click();
-                }
-            });
-
-            radioInput.addEventListener('change', () => {
-                this.selectMultipleChoiceAnswer(choice, optionDiv);
-            });
-
-            optionDiv.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    radioInput.click();
-                }
-            });
-
-            optionsContainer.appendChild(optionDiv);
-        });
-
-        this.selectedAnswer = null;
-        document.getElementById('mcSubmitBtn').disabled = true;
-        document.getElementById('mcNextBtn').style.display = 'none';
-        document.getElementById('mcFeedback').style.display = 'none';
-        document.getElementById('mcFeedback').className = 'feedback';
-    }
-
-    /**
-     * Select Multiple Choice Answer
-     */
-    selectMultipleChoiceAnswer(answer, optionDiv) {
-        document.querySelectorAll('.answer-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
-
-        optionDiv.classList.add('selected');
-        this.selectedAnswer = answer;
-        document.getElementById('mcSubmitBtn').disabled = false;
-    }
-
-    /**
-     * Submit Multiple Choice Answer
-     */
-    submitMultipleChoiceAnswer() {
-        if (!this.selectedAnswer) return;
-
-        const isCorrect = this.multipleChoiceExercise.submitAnswer(this.selectedAnswer);
-
-        this.showMultipleChoiceFeedback(isCorrect);
-
-        document.getElementById('mcSubmitBtn').disabled = true;
-
-        document.querySelectorAll('.answer-option input[type="radio"]').forEach(radio => {
-            radio.disabled = true;
-        });
-
-        const question = this.multipleChoiceExercise.getCurrentQuestion();
-        document.querySelectorAll('.answer-option').forEach(option => {
-            const radio = option.querySelector('input[type="radio"]');
-            if (radio.value === question.correctAnswer) {
-                option.classList.add('correct');
-            } else if (radio.value === this.selectedAnswer && !isCorrect) {
-                option.classList.add('incorrect');
-            }
-        });
-
-        if (this.multipleChoiceExercise.isComplete()) {
-            setTimeout(() => {
-                this.showResults('multiple_choice');
-            }, 2000);
-        } else {
-            document.getElementById('mcNextBtn').style.display = 'inline-block';
-        }
-
-        document.getElementById('mcScore').textContent = this.multipleChoiceExercise.score;
-    }
-
-    /**
-     * Show Multiple Choice Feedback
-     */
-    showMultipleChoiceFeedback(isCorrect) {
-        const feedbackDiv = document.getElementById('mcFeedback');
-        const question = this.multipleChoiceExercise.getCurrentQuestion();
-
-        if (isCorrect) {
-            feedbackDiv.className = 'feedback correct';
-            feedbackDiv.innerHTML = '✓ Correct! Well done!';
-        } else {
-            feedbackDiv.className = 'feedback incorrect';
-            feedbackDiv.innerHTML = `✗ Incorrect. The correct answer is: <strong>${question.correctAnswer}</strong>`;
-        }
-
-        feedbackDiv.style.display = 'block';
-    }
-
-    /**
-     * Next Multiple Choice Question
-     */
-    nextMultipleChoiceQuestion() {
-        this.multipleChoiceExercise.nextQuestion();
-        this.displayMultipleChoiceQuestion();
-    }
-
-    /**
-     * Update Multiple Choice Progress
-     */
-    updateMultipleChoiceProgress() {
-        const progress = this.multipleChoiceExercise.getProgress();
-        
-        document.getElementById('mcCurrentQuestion').textContent = progress.current;
-        document.getElementById('mcTotalQuestions').textContent = progress.total;
-        document.getElementById('mcScore').textContent = progress.score;
-        
-        const progressFill = document.getElementById('mcProgressFill');
-        progressFill.style.width = `${progress.percentage}%`;
-    }
+    // Multiple Choice methods removed - now handled by MultipleChoiceUI
 
     /**
      * Start Fill in the Blank Exercise
@@ -929,12 +754,18 @@ class App {
     /**
      * Show Results Screen
      */
-    showResults(exerciseType) {
-        let results;
+    showResults(exerciseType, results = null) {
         let difficulty;
         
-        if (exerciseType === 'multiple_choice') {
-            results = this.multipleChoiceExercise.getResults();
+        // If results not provided, get them from the exercise
+        if (!results) {
+            if (exerciseType === 'multiple_choice') {
+                results = this.multipleChoiceExercise.getResults();
+                difficulty = document.getElementById('mcDifficulty').value;
+            }
+        }
+        
+        if (exerciseType === 'multiple_choice' && results) {
             difficulty = document.getElementById('mcDifficulty').value;
         } else if (exerciseType === 'fill_in_the_blank') {
             results = this.fillInBlankExercise.getResults();
@@ -1000,10 +831,7 @@ class App {
      */
     retryExercise() {
         if (this.currentExerciseType === 'multiple_choice') {
-            this.multipleChoiceExercise.reset();
-            this.showScreen('multipleChoiceScreen');
-            document.getElementById('mcSettingsPanel').style.display = 'block';
-            document.getElementById('mcExercisePanel').style.display = 'none';
+            this.multipleChoiceUI.show();
         } else if (this.currentExerciseType === 'fill_in_the_blank') {
             this.fillInBlankExercise.reset();
             this.showScreen('fillInBlankScreen');
@@ -1019,11 +847,11 @@ class App {
             this.showScreen('bubblePopScreen');
             // Start the game directly without showing settings
             this.bubblePopUI.startGame();
-        } else if (this.currentExerciseType === 'speed_reading') {
-            // For Speed Reading, restart with the same settings
-            this.showScreen('speedReadingScreen');
-            // Start the game directly without showing settings
-            this.speedReadingUI.startGame();
+        } else if (this.currentExerciseType === 'fluent_reading') {
+            // For Fluent Reading, restart with the same settings
+            this.showScreen('fluentReadingScreen');
+            // Start the reading directly without showing settings
+            this.fluentReadingUI.startReading();
         }
     }
 
