@@ -6,7 +6,7 @@ An interactive educational platform for 3rd-grade reading and spelling exercises
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/cadenaplatforms/PromptingHumans.git
+   git clone https://github.com/brfoley76/PromptingHumans.git
    cd learning_module
    ```
 
