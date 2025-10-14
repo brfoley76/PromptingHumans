@@ -2,11 +2,11 @@
 
 An interactive educational platform for 3rd-grade reading and spelling exercises, featuring a progressive learning system with gamified exercises and a modular architecture.
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/cadenaplatforms/PromptingHumans.git
+   git clone https://github.com/brfoley76/PromptingHumans.git
    cd learning_module
    ```
 
@@ -20,7 +20,7 @@ An interactive educational platform for 3rd-grade reading and spelling exercises
    - Normal mode: `http://localhost:8000`
    - Dev mode (all exercises unlocked): `http://localhost:8000?dev`
 
-## 📚 Features
+## Features
 
 ### Progressive Exercise System
 The learning module features a carefully designed progression system where students advance through increasingly challenging exercises:
@@ -43,7 +43,7 @@ Access developer tools by adding `?dev` to the URL:
 - Reset user data and scores
 - Toggle exercise lock states
 
-## 🏗️ Architecture
+## Architecture
 
 ### Modular Exercise Framework
 The application uses a modular architecture with a base `ExerciseFramework` class that all exercises extend:
@@ -101,7 +101,7 @@ Handles user progress and persistence:
 - Score history and best scores
 - Progress tracking across sessions
 
-## 🎮 Exercise Details
+## Exercise Details
 
 ### Multiple Choice
 - **Difficulty Levels:** 3, 4, or 5 answer choices
@@ -143,7 +143,7 @@ Handles user progress and persistence:
   - Post-exercise reading mode with scrolling
   - Paragraph formatting support
 
-## 📊 Curriculum Structure
+## Curriculum Structure
 
 The curriculum is stored in JSON format (`web/data/r003.1.json`) with:
 
@@ -166,7 +166,7 @@ Structured reading content with variants:
 }
 ```
 
-## 🛠️ Development
+## Development
 
 ### Adding New Exercises
 1. Extend the `ExerciseFramework` class
@@ -195,7 +195,7 @@ Structured reading content with variants:
 3. Verify touch interactions on mobile devices
 4. Check localStorage persistence
 
-## 🔧 Configuration
+## Configuration
 
 ### Difficulty Settings
 Each exercise supports customizable difficulty through:
@@ -209,7 +209,7 @@ Each exercise supports customizable difficulty through:
 - Color schemes in CSS (`web/css/styles.css`)
 - Canvas dimensions (900x600 default)
 
-## 📱 Browser Compatibility
+## Browser Compatibility
 
 - **Chrome:** Full support (recommended)
 - **Firefox:** Full support
@@ -217,7 +217,7 @@ Each exercise supports customizable difficulty through:
 - **Edge:** Full support
 - **Mobile browsers:** Touch-optimized controls
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -226,17 +226,17 @@ Each exercise supports customizable difficulty through:
 5. Test thoroughly in dev mode
 6. Submit a pull request
 
-## 📄 License
+## License
 
 This project is part of the PromptingHumans educational initiative.
 
-## 🐛 Known Issues
+## Known Issues
 
 - Some legacy exercises need migration to the modular framework
 - Mobile keyboard may overlap input fields on smaller screens
 - Audio feedback system planned but not yet implemented
 
-## 🚧 Roadmap
+## Roadmap
 
 - [ ] Migrate legacy exercises to ExerciseFramework
 - [ ] Add audio pronunciation support
@@ -246,6 +246,6 @@ This project is part of the PromptingHumans educational initiative.
 - [ ] Add more curriculum modules
 - [ ] Implement adaptive difficulty system
 
-## 📞 Support
+## Support
 
 For issues or questions, please use the GitHub issue tracker or contact the development team through the repository.
