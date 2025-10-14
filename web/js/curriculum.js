@@ -67,7 +67,43 @@ class CurriculumManager {
                     {"word": "biscuit", "definition": "dry bread. What pirates eat when they are at sea.", "fitb": "A {blank} is "},
                     {"word": "basket", "definition": "a container for biscuits.", "fitb": "A {blank} is "},
                     {"word": "island", "definition": "land surrounded by sea.", "fitb": "An {blank} is "}
-                ]
+                ],
+                "narrative": {
+                    "0": {"text": "It was Lucy's first day in her ", "flag": "{checkpoint}"},
+                    "1": {"text": "new job on a {pirate} ship. ", "vocab": "parrot", "spelling": "pirrote"},
+                    "2": {"text": "She didn't know what to expect, but she was excited. "},
+                    "3": {"text": "Her {mother} had been a pirate captain, ", "vocab": "money", "spelling": "motter"},
+                    "4": {"text": "and it had always been Lucy's dream, too.\n\n"},
+                    "5": {"text": "Her father was a shop keeper on {Pirate Island}. ", "spelling": "Pirote Iland"},
+                    "6": {"text": "When Lucy told him she was going to join a {pirate} crew, ", "vocab": "rat"},
+                    "7": {"text": "he sighed sadly, "},
+                    "8": {"text": "but packed her a bag of {clothes}, ", "spelling": "close"},
+                    "9": {"text": "and her favorite {book}, ", "vocab": "dock", "spelling": "bok"},
+                    "10": {"text": "and sent her on her way to the {docks}.\n\n ", "vocab": "decks", "flag": "{checkpoint}"},
+                    "11": {"text": "Lucy stood on the {dock} by the ship. ", "vocab": "dog", "spelling": "dok"},
+                    "12": {"text": "It was very early. "},
+                    "13": {"text": "She looked up at the tall {masts}, ", "spelling": "matsts"},
+                    "14": {"text": "with their {sails}. ", "vocab": "sales"},
+                    "15": {"text": "The {sails} had holes. ", "spelling": "sals"},
+                    "16": {"text": "She looked at the {side} of the ship. ", "vocab": "sighed"},
+                    "17": {"text": "It didn't look very {clean}. ", "spelling":"clin"},
+                    "18": {"text": "She looked at the {pirates}. ", "vocab": "baskets","spelling": "prates"},
+                    "19": {"text": "They didn't look very {clean}, either.\n\n ", "spelling":"clin", "flag": "{checkpoint}"},
+                    "20": {"text": "'Is this the right ship?' Lucy asked. "},
+                    "21": {"text": "She {looked} carefully. ", "vocab": "locked"},
+                    "22": {"text": "The {ship} had a name on it, ", "spelling": "shpi"},
+                    "23": {"text": "under the {sea} slime. ", "vocab": "see", "spelling": "saa"},
+                    "24": {"text": "The name was '{Monkey} Puzzle'. ", "spelling": "Mongey"},
+                    "25": {"text": "'It's the right {ship},' she said. \n\n ", "vocab": "biscuit", "flag": "{checkpoint}"},
+                    "26": {"text": "A large {pirate} walked over to her. ", "spelling": "porate", "vocab": "island"},
+                    "27": {"text": "'Lucy? I am the First {Mate} ", "vocab": "mast"},
+                    "28": {"text": "of the {Monkey} Puzzle. ", "vocab": "Money"},
+                    "29": {"text": "You can call me First Mate Bob.'\n\n "},
+                    "30": {"text": "Lucy looked at {First} Mate Bob. ", "spelling": "Firts"},
+                    "31": {"text": "He had a big red {parrot}, ", "vocab": "pirate"},
+                    "32": {"text": "sitting on his head. "},
+                    "33": {"text": "The {parrot} said 'You can call me First Mate Parrot.'\n\n ", "spelling": "porrat"}
+                }
             }
         };
         this.vocabulary = this.curriculumData.content.vocabulary;

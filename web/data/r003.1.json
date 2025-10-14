@@ -3,7 +3,7 @@
   "id": "r003.1",
   "dependencies": null,
   "subject": "reading",
-  "exercises": ["multiple_choice", "fill_in_the_blank", "spelling", "bubble_pop"],
+  "exercises": ["multiple_choice", "fill_in_the_blank", "spelling", "bubble_pop", "fluent_reading"],
   "content": {
     "vocabulary": [
       {"word": "pirate", "definition": "a person who steals from ships at sea", "fitb": "A {blank} is "},

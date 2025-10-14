@@ -157,12 +157,28 @@ class FluentReadingExercise extends ExerciseFramework {
      */
     loadNarrative() {
         const curriculumData = this.curriculumManager.curriculumData;
-        if (!curriculumData?.content?.narrative) {
-            console.error('No narrative content available');
+        
+        // Enhanced error logging
+        if (!curriculumData) {
+            console.error('FluentReading: No curriculum data available');
+            console.error('CurriculumManager state:', this.curriculumManager);
+            return;
+        }
+        
+        if (!curriculumData.content) {
+            console.error('FluentReading: No content in curriculum data');
+            console.error('Available keys:', Object.keys(curriculumData));
+            return;
+        }
+        
+        if (!curriculumData.content.narrative) {
+            console.error('FluentReading: No narrative in curriculum content');
+            console.error('Available content keys:', Object.keys(curriculumData.content));
             return;
         }
         
         this.narrative = curriculumData.content.narrative;
+        console.log('FluentReading: Loaded narrative with', Object.keys(this.narrative).length, 'fragments');
         this.processNarrative();
     }
     
