@@ -93,6 +93,11 @@ class MultipleChoiceUI {
             document.getElementById('mcSettingsPanel').style.display = 'none';
             document.getElementById('mcExercisePanel').style.display = 'block';
             
+            // Start activity chat widget
+            if (this.app.activityChatWidget) {
+                this.app.activityChatWidget.startActivity('multiple_choice', difficulty.toString());
+            }
+            
             this.displayQuestion();
         } catch (error) {
             console.error('Failed to start exercise:', error);
@@ -188,8 +193,44 @@ class MultipleChoiceUI {
         if (!this.selectedAnswer) return;
         
         try {
+            const question = this.exercise.getCurrentQuestion();
             const isCorrect = this.exercise.submitAnswer(this.selectedAnswer);
             this.showFeedback(isCorrect);
+            
+            // Get difficulty behavior config
+            const difficulty = this.exercise.settings.difficulty.toString();
+            const behavior = MultipleChoiceExercise.DIFFICULTY_BEHAVIORS[difficulty];
+            
+            // Send activity event based on difficulty
+            if (!isCorrect && behavior && this.app.activityChatWidget) {
+                if (behavior.feedbackTiming === 'immediate') {
+                    // Easy mode: immediate feedback
+                    this.app.activityChatWidget.sendActivityEvent('wrong_answer', {
+                        question: question.definition,
+                        userAnswer: this.selectedAnswer,
+                        correctAnswer: question.correctAnswer,
+                        difficulty: difficulty,
+                        behavior: 'immediate_hint'
+                    });
+                } else if (behavior.feedbackTiming === 'per_question') {
+                    // Medium mode: one hint
+                    this.app.activityChatWidget.sendActivityEvent('wrong_answer', {
+                        question: question.definition,
+                        userAnswer: this.selectedAnswer,
+                        correctAnswer: question.correctAnswer,
+                        difficulty: difficulty,
+                        behavior: 'single_hint'
+                    });
+                }
+                // Hard mode: no immediate feedback (end_only)
+            } else if (isCorrect && behavior && behavior.confirmCorrections && this.app.activityChatWidget) {
+                // Confirm correct answers in easy/medium modes
+                this.app.activityChatWidget.sendActivityEvent('correct_answer', {
+                    question: question.definition,
+                    answer: this.selectedAnswer,
+                    difficulty: difficulty
+                });
+            }
             
             document.getElementById('mcSubmitBtn').disabled = true;
             
@@ -199,7 +240,6 @@ class MultipleChoiceUI {
             });
             
             // Show correct/incorrect styling
-            const question = this.exercise.getCurrentQuestion();
             document.querySelectorAll('.answer-option').forEach(option => {
                 const radio = option.querySelector('input[type="radio"]');
                 if (radio.value === question.correctAnswer) {
@@ -283,6 +323,11 @@ class MultipleChoiceUI {
      * @param {Object} results - Exercise results
      */
     showResults(results) {
+        // End activity chat session
+        if (this.app.activityChatWidget) {
+            this.app.activityChatWidget.endActivity();
+        }
+        
         this.app.showResults('multiple_choice', results);
     }
     

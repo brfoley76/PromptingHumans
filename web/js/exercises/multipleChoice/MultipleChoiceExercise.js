@@ -12,6 +12,31 @@
  */
 class MultipleChoiceExercise extends ExerciseFramework {
     /**
+     * Difficulty behavior configurations
+     * Defines how the activity helper chat should behave at each difficulty level
+     */
+    static DIFFICULTY_BEHAVIORS = {
+        '3': {  // Easy (3 choices)
+            feedbackTiming: 'immediate',      // Feedback after each answer
+            hintsPerMistake: 'unlimited',     // Unlimited hints
+            confirmCorrections: true,         // Confirm when student fixes mistake
+            description: 'Easy - Immediate feedback with unlimited hints'
+        },
+        '4': {  // Medium (4 choices)
+            feedbackTiming: 'per_question',   // One hint per question
+            hintsPerMistake: 1,               // One hint per mistake
+            confirmCorrections: true,         // Confirm corrections
+            description: 'Medium - One hint per mistake'
+        },
+        '5': {  // Hard (5 choices)
+            feedbackTiming: 'end_only',       // Feedback only at end
+            hintsPerMistake: 0,               // No hints during exercise
+            confirmCorrections: false,        // No confirmation
+            description: 'Hard - Feedback only at end'
+        }
+    };
+
+    /**
      * Creates an instance of MultipleChoiceExercise
      * @param {CurriculumManager} curriculumManager - Manager for curriculum data
      */

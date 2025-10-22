@@ -163,6 +163,11 @@ class BubblePopUI {
         // Initialize the exercise with canvas and settings
         await this.exercise.initializeGame(this.canvas, settings);
         
+        // Start activity chat widget
+        if (this.app.activityChatWidget) {
+            this.app.activityChatWidget.startActivity('bubble_pop', settings.difficulty);
+        }
+        
         // Start the exercise
         this.exercise.start();
     }
@@ -309,6 +314,21 @@ class BubblePopUI {
             results.total
         );
         
+        // Send metacognitive prompts to activity chat
+        if (this.app.activityChatWidget) {
+            const behavior = BubblePopExercise.DIFFICULTY_BEHAVIORS[settings.difficulty];
+            if (behavior && behavior.metacognitivePrompts) {
+                // Send completion event with prompts
+                this.app.activityChatWidget.sendActivityEvent('activity_complete', {
+                    activity: 'bubble_pop',
+                    difficulty: settings.difficulty,
+                    score: results.score,
+                    total: results.total,
+                    prompts: behavior.prompts
+                });
+            }
+        }
+        
         // Show results
         this.showResults(results);
     }
@@ -317,6 +337,11 @@ class BubblePopUI {
      * Show results screen
      */
     showResults(results) {
+        // End activity chat session
+        if (this.app.activityChatWidget) {
+            this.app.activityChatWidget.endActivity();
+        }
+        
         // Update results display
         document.getElementById('finalScore').textContent = results.gameScore.right;
         document.getElementById('finalTotal').textContent = results.bubbleCount;

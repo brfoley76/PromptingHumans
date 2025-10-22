@@ -174,6 +174,11 @@ class FluentReadingUI {
         // Initialize and start the exercise
         await this.exercise.initializeGame(this.canvas, settings);
         
+        // Start activity chat widget
+        if (this.app.activityChatWidget) {
+            this.app.activityChatWidget.startActivity('fluent_reading', settings.difficulty);
+        }
+        
         // Update time estimate with actual word count
         const totalWords = this.exercise.totalWords;
         const minutes = Math.ceil(totalWords / settings.speed);
@@ -280,6 +285,22 @@ class FluentReadingUI {
             100 // Out of 100%
         );
         
+        // Send metacognitive prompts to activity chat
+        if (this.app.activityChatWidget) {
+            const behavior = FluentReadingExercise.DIFFICULTY_BEHAVIORS[settings.difficulty];
+            if (behavior && behavior.metacognitivePrompts) {
+                // Send completion event with prompts
+                this.app.activityChatWidget.sendActivityEvent('activity_complete', {
+                    activity: 'fluent_reading',
+                    difficulty: settings.difficulty,
+                    completionRate: results.completionRate,
+                    wordsRead: results.wordsRead,
+                    totalWords: results.totalWords,
+                    prompts: behavior.prompts
+                });
+            }
+        }
+        
         // Show results
         this.showResults(results);
     }
@@ -288,6 +309,11 @@ class FluentReadingUI {
      * Show results screen
      */
     showResults(results) {
+        // End activity chat session
+        if (this.app.activityChatWidget) {
+            this.app.activityChatWidget.endActivity();
+        }
+        
         // Update results display
         document.getElementById('finalScore').textContent = results.completionRate || 0;
         document.getElementById('finalTotal').textContent = '100';

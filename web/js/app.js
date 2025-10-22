@@ -23,6 +23,13 @@ class App {
         this.curriculumManager = new CurriculumManager();
         this.scoreManager = new ScoreManager();
         
+        // Initialize backend integration
+        this.apiClient = new APIClient();
+        this.sessionManager = new SessionManager(this.apiClient, this.scoreManager);
+        this.wsClient = new WebSocketClient();
+        this.chatWidget = new ChatWidget(this.wsClient);
+        this.activityChatWidget = new ActivityChatWidget(this.wsClient);
+        
         // Initialize Multiple Choice with new modular pattern
         this.multipleChoiceExercise = new MultipleChoiceExercise(this.curriculumManager);
         this.multipleChoiceUI = new MultipleChoiceUI(this, this.multipleChoiceExercise);
@@ -51,6 +58,13 @@ class App {
      * Initialize the application
      */
     async init() {
+        // Initialize backend session manager
+        await this.sessionManager.initialize();
+        
+        // Initialize chat widgets
+        this.chatWidget.initialize();
+        this.activityChatWidget.initialize();
+        
         // Load curriculum data
         await this.curriculumManager.loadCurriculum();
         
@@ -71,6 +85,10 @@ class App {
         // Check if user exists
         if (this.scoreManager.hasUser()) {
             this.showUserInfo();
+            
+            // Attempt to restore backend session
+            await this.restoreBackendSession();
+            
             this.showScreen('selectionScreen');
             this.updateExerciseCards();
         } else {
@@ -308,13 +326,72 @@ class App {
     /**
      * Register a new user
      */
-    registerUser() {
+    async registerUser() {
         const name = document.getElementById('studentName').value.trim();
         if (name) {
+            // Create local user first
             this.scoreManager.createUser(name);
+            
+            // Try to create backend session
+            const userInfo = this.scoreManager.getUserInfo();
+            const sessionResult = await this.sessionManager.createSession(name, userInfo.studentId);
+            
+            if (sessionResult.tutorGreeting) {
+                console.log('Tutor greeting:', sessionResult.tutorGreeting);
+                // Display greeting in chat widget
+                this.chatWidget.displayGreeting(sessionResult.tutorGreeting);
+            }
+            
+            if (sessionResult.offline) {
+                console.log('Running in offline mode');
+            } else {
+                console.log('Connected to backend, session ID:', sessionResult.sessionId);
+                // Connect WebSocket
+                this.wsClient.connect(sessionResult.sessionId);
+                // Show chat widget
+                this.chatWidget.show();
+            }
+            
             this.showUserInfo();
             this.showScreen('selectionScreen');
             this.updateExerciseCards();
+        }
+    }
+
+    /**
+     * Restore backend session on page reload
+     */
+    async restoreBackendSession() {
+        const userInfo = this.scoreManager.getUserInfo();
+        if (!userInfo) return;
+        
+        console.log('Attempting to restore backend session for:', userInfo.name);
+        
+        try {
+            const sessionResult = await this.sessionManager.createSession(
+                userInfo.name,
+                userInfo.studentId
+            );
+            
+            if (sessionResult.offline) {
+                console.log('Backend unavailable, running in offline mode');
+                return;
+            }
+            
+            console.log('Backend session restored:', sessionResult.sessionId);
+            
+            // Connect WebSocket
+            this.wsClient.connect(sessionResult.sessionId);
+            
+            // Show chat widget
+            this.chatWidget.show();
+            
+            // Display welcome back message
+            this.chatWidget.displayGreeting(`Welcome back, ${userInfo.name}! 👋`);
+            
+        } catch (error) {
+            console.error('Failed to restore backend session:', error);
+            // Continue in offline mode
         }
     }
 

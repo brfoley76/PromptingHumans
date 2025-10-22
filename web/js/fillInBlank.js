@@ -3,6 +3,31 @@
  */
 
 class FillInBlankExercise {
+    /**
+     * Difficulty behavior configurations
+     * Defines how the activity helper chat should behave at each difficulty level
+     */
+    static DIFFICULTY_BEHAVIORS = {
+        'easy': {
+            feedbackTiming: 'immediate',      // Feedback after each answer
+            hintsPerMistake: 'unlimited',     // Unlimited hints
+            confirmCorrections: true,         // Confirm when student fixes mistake
+            description: 'Easy - Only needed words, immediate feedback'
+        },
+        'moderate': {
+            feedbackTiming: 'per_question',   // One hint per question
+            hintsPerMistake: 1,               // One hint per mistake
+            confirmCorrections: true,         // Confirm corrections
+            description: 'Moderate - All vocabulary, one hint per mistake'
+        },
+        'hard': {
+            feedbackTiming: 'end_only',       // Feedback only at end
+            hintsPerMistake: 0,               // No hints during exercise
+            confirmCorrections: false,        // No confirmation
+            description: 'Hard - All vocabulary, feedback only at end'
+        }
+    };
+
     constructor(curriculumManager) {
         this.curriculumManager = curriculumManager;
         this.questions = [];
@@ -10,7 +35,7 @@ class FillInBlankExercise {
         this.score = 0;
         this.userAnswers = [];
         this.numQuestions = 10;
-        this.difficulty = 'easy'; // 'easy' or 'moderate'
+        this.difficulty = 'easy'; // 'easy', 'moderate', or 'hard'
         this.draggedWord = null;
     }
 
@@ -41,7 +66,7 @@ class FillInBlankExercise {
             // Easy: only include the necessary words
             wordBank = selectedItems.map(item => item.word);
         } else {
-            // Moderate: include all vocabulary words
+            // Moderate/Hard: include all vocabulary words
             wordBank = vocabulary.map(item => item.word);
         }
         

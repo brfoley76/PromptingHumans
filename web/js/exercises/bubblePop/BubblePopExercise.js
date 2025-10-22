@@ -1,9 +1,46 @@
 /**
- * BubblePopExercise.js
- * Bubble Pop game exercise implementation
+ * Bubble Pop Exercise - Game-based vocabulary practice
+ * @class BubblePopExercise
+ * @extends ExerciseFramework
  */
-
 class BubblePopExercise extends ExerciseFramework {
+    /**
+     * Difficulty behavior configurations
+     * For Bubble Pop, metacognitive prompts are used at the end regardless of difficulty
+     */
+    static DIFFICULTY_BEHAVIORS = {
+        'easy': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'Which words were hardest for you to identify?',
+                'What strategies did you use to spot misspellings?',
+                'Did you notice any patterns in the errors?'
+            ],
+            description: 'Easy - Slower speed, metacognitive reflection at end'
+        },
+        'moderate': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'Which words were hardest for you?',
+                'What strategies helped you the most?',
+                'How did you handle the faster pace?'
+            ],
+            description: 'Moderate - Medium speed, metacognitive reflection at end'
+        },
+        'hard': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'What made this challenging for you?',
+                'What strategies would you use differently next time?',
+                'Which word patterns were trickiest?'
+            ],
+            description: 'Hard - Fast speed, metacognitive reflection at end'
+        }
+    };
+
     constructor(curriculumManager) {
         super(curriculumManager, 'bubble_pop');
         
@@ -237,32 +274,35 @@ class BubblePopExercise extends ExerciseFramework {
         this.inputHandler.on('keydown', (data) => {
             if (this.state !== 'active') return;
             
+            // Normalize key to lowercase for case-insensitive comparison
+            const key = data.key.toLowerCase();
+            
             // Different key handling based on difficulty mode
             if (this.difficultyMode === 'easy') {
                 // Easy mode: Only Q key works
-                if (data.key === 'q' && this.hoveredBubble) {
+                if (key === 'q' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, true);
                     this.hoveredBubble = null;
                 }
             } else if (this.difficultyMode === 'moderate') {
                 // Moderate mode: Only R key works
-                if (data.key === 'r' && this.hoveredBubble) {
+                if (key === 'r' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, false);
                     this.hoveredBubble = null;
                 }
             } else {
                 // Hard mode: Both Q and R keys work
-                if (data.key === 'q' && this.hoveredBubble) {
+                if (key === 'q' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, true);
                     this.hoveredBubble = null;
-                } else if (data.key === 'r' && this.hoveredBubble) {
+                } else if (key === 'r' && this.hoveredBubble) {
                     this.handleBubbleClick(this.hoveredBubble, false);
                     this.hoveredBubble = null;
                 }
             }
             
             // Escape key to pause/quit (works in all modes)
-            if (data.key === 'escape') {
+            if (key === 'escape') {
                 this.pause();
             }
         });

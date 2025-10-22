@@ -1,9 +1,46 @@
 /**
- * FluentReadingExercise.js
- * Fluent reading exercise with streaming text display
+ * Fluent Reading Exercise - Reading practice with streaming text
+ * @class FluentReadingExercise
+ * @extends ExerciseFramework
  */
-
 class FluentReadingExercise extends ExerciseFramework {
+    /**
+     * Difficulty behavior configurations
+     * For Fluent Reading, metacognitive prompts are used at the end regardless of difficulty
+     */
+    static DIFFICULTY_BEHAVIORS = {
+        'easy': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'Which words or phrases were hardest to read?',
+                'What strategies did you use to keep up with the text?',
+                'Did you find any patterns that helped you read faster?'
+            ],
+            description: 'Easy - Slower speed, metacognitive reflection at end'
+        },
+        'moderate': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'How did the reading speed feel for you?',
+                'Which parts were most challenging?',
+                'What would help you read more fluently?'
+            ],
+            description: 'Moderate - Medium speed, metacognitive reflection at end'
+        },
+        'hard': {
+            feedbackTiming: 'end_only',
+            metacognitivePrompts: true,
+            prompts: [
+                'What made this reading challenging?',
+                'How did you handle the faster pace?',
+                'What strategies would you use next time?'
+            ],
+            description: 'Hard - Fast speed, metacognitive reflection at end'
+        }
+    };
+
     constructor(curriculumManager) {
         super(curriculumManager, 'fluent_reading');
         
