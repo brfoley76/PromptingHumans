@@ -3,6 +3,7 @@
   "id": "r003.1",
   "dependencies": null,
   "subject": "reading",
+  "goals": "build reading fluency, spelling, and vocabulary, with a focus on words in context. Exercises will practice word pairs like ship-shape, money-monkey, deck-dock, cat-rat and pirate-parrot. Pedagogical tools should include phonics, rhyming, 'multiple meanings', as well prompting with starting letters, or varying definitions.",
   "exercises": ["multiple_choice", "fill_in_the_blank", "spelling", "bubble_pop", "fluent_reading"],
   "content": {
     "vocabulary": [
@@ -44,7 +45,7 @@
         "9": {"text": "and her favorite {book}, ", "vocab": "dock", "spelling": "bok"},
         "10": {"text": "and sent her on her way to the {docks}.\n\n ", "vocab": "decks", "flag": "{checkpoint}"},
         "11": {"text": "Lucy stood on the {dock} by the ship. ", "vocab": "dog", "spelling": "dok"},
-        "12": {"text": "It was very early. ", "variant": "canonical"},
+        "12": {"text": "It was very early. "},
         "13": {"text": "She looked up at the tall {masts}, ", "spelling": "matsts"},
         "14": {"text": "with their {sails}. ", "vocab": "sales"},
         "15": {"text": "The {sails} had holes. ", "spelling": "sals"},
@@ -61,11 +62,31 @@
         "26": {"text": "A large {pirate} walked over to her. ", "spelling": "porate", "vocab": "island"},
         "27": {"text": "'Lucy? I am the First {Mate} ", "vocab": "mast"},
         "28": {"text": "of the {Monkey} Puzzle. ", "vocab": "Money"},
-        "29": {"text": "You can call me First Mate Bob.'\n\n ", "variant": "canonical"},
+        "29": {"text": "You can call me First Mate Bob.'\n\n "},
         "30": {"text": "Lucy looked at {First} Mate Bob. ", "spelling": "Firts"},
         "31": {"text": "He had a big red {parrot}, ", "vocab": "pirate"},
         "32": {"text": "sitting on his head. "},
-        "33": {"text": "The {parrot} said 'You can call me First Mate Parrot.'\n\n ", "spelling": "porrat"}
+        "33": {"text": "The {parrot} said 'You can call me First Parrot.'\n\n ", "spelling": "porrat", "flag": "{checkpoint}"},
+		"34":{"text": "'Lucy, we'll be sailing soon,' said Bob. 'Are you ship {shape}?'\n\n", "vocab": "shop"},
+		"35":{"text": "Lucy looked at the slimy {ship}. ", "spelling": "sihp"}, 
+		"36":{"text": "The ship was long. The ship had {masts}. The ship had a point on the front. ", "vocab": "most", "spelling": "massests"},
+		"37":{"text": "Lucy looked down at herself. "},
+		"38":{"text": "'I don't think so, First {Mate} Bob', she said. ", "vocab": "mast"},
+		"39":{"text": "'I'm shaped like a {girl}, not a ship.' \n\n", "vocab": "gorilla", "spelling": "gril", "flag": "{checkpoint}"},
+		"40":{"text": "First Mate Bob laughed, 'No! Ship {shape} just means that something is in good shape.'\n\n", "vocab": "slip"},
+		"41":{"text": "'Ship {shape}!' said First Parrot the parrot, looking at Lucy.\n\n", "vocab": "slip", "spelling": "shapee"},
+		"42":{"text": "'Ship shape,' said Lucy, looking at the holes in the sails.\n\n"},
+		"43":{"text": "A pirate with one {eye}, one hand and one leg walked over. ", "vocab": "aye"},
+		"44":{"text": "He had a {monkey} sitting on his head. ", "spelling": "munkey"},
+		"45":{"text": "'You, first mate,' said the pirate. 'Get the ship ready to sail.\n\n'"},
+		"46":{"text": "'Aye {aye}, Captain' said First Mate Bob.\n\n", "vocab": "eye"},
+		"47":{"text": "'You, new girl. I have some jobs for you,' said the {captain}. ", "spelling": "cuptin"},
+		"48":{"text": "'My mother is on the ship. "},
+		"49":{"text": "Bring her a {biscuit} with honey, ", "vocab": "bucket", "spelling": "bcuit"},
+		"50":{"text": "and bring her some grog. \n\n"},
+		"51":{"text": "'Here is my {money} and a key. ", "spelling": "mooney"}, 
+		"52":{"text": "Lock the {money} in my chest. ", "vocab": "monkey"},
+		"53":{"text": "I don't want my mother to steal it.'", "flag": "{checkpoint}"}
     }
   }
 }

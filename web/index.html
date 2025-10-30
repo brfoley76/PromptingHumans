@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning Module - Pirate Vocabulary</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/new-layout.css">
     <link rel="stylesheet" href="css/chat-widget.css">
     <link rel="stylesheet" href="css/activity-chat-widget.css">
+    <link rel="stylesheet" href="css/click-to-start.css">
+    <link rel="stylesheet" href="css/exercise-chat.css">
 </head>
 <body>
     <div class="container">
@@ -26,93 +29,140 @@
             <div id="registrationScreen" class="screen">
                 <div class="registration-card">
                     <h2>Welcome to the Learning Module!</h2>
-                    <p>Let's get started by telling us your name.</p>
+                    <p>Let's get started! Choose a username to begin.</p>
                     
                     <div class="registration-form">
-                        <label for="studentName">What's your name?</label>
-                        <input type="text" id="studentName" placeholder="Enter your name" maxlength="50">
+                        <label for="studentName">Choose a Username</label>
+                        <input type="text" id="studentName" placeholder="Letters and numbers only" maxlength="50">
+                        <p class="input-hint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                            Username must contain only letters and numbers (no spaces or special characters)
+                        </p>
                         <button id="registerBtn" class="btn btn-primary" disabled>Start Learning</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Exercise Selection Screen -->
+            <!-- Exercise Selection Screen - New Layout -->
             <div id="selectionScreen" class="screen">
-                <h2 class="section-title">Choose Your Exercise</h2>
-                <div class="exercise-grid">
-                    <!-- Multiple Choice Card -->
-                    <div class="exercise-card" data-exercise="multiple_choice">
-                        <div class="exercise-header">
-                            <h3>Multiple Choice</h3>
-                            <span class="difficulty-badge easy">Easy</span>
-                        </div>
-                        <p class="exercise-description">Match definitions with the correct vocabulary words.</p>
-                        <div class="exercise-scores"></div>
-                        <button class="btn btn-exercise" data-exercise-btn="multiple_choice">Play</button>
-                    </div>
+                <div class="new-layout">
+                    <!-- Left Sidebar - Activity Icons -->
+                    <aside class="activity-sidebar">
+                        <h3 class="sidebar-title">Activities</h3>
+                        <div class="activity-icons-list">
+                            <!-- Multiple Choice -->
+                            <div class="activity-icon" data-exercise="multiple_choice">
+                                <div class="icon-graphic">
+                                    <svg viewBox="0 0 60 60" class="activity-svg">
+                                        <circle cx="30" cy="30" r="28" fill="#64B5F6" stroke="#1976D2" stroke-width="2"/>
+                                        <text x="30" y="38" text-anchor="middle" font-size="32" font-weight="bold" fill="white">?</text>
+                                    </svg>
+                                </div>
+                                <div class="icon-label">Multiple Choice</div>
+                                <div class="difficulty-indicator easy">Easy</div>
+                                <div class="score-bubble"></div>
+                            </div>
 
-                    <!-- Fill in the Blank Card -->
-                    <div class="exercise-card" data-exercise="fill_in_the_blank">
-                        <div class="exercise-header">
-                            <h3>Fill in the Blank</h3>
-                            <span class="difficulty-badge easy">Easy</span>
-                        </div>
-                        <p class="exercise-description">Drag words to complete the definitions.</p>
-                        <div class="exercise-scores"></div>
-                        <button class="btn btn-exercise" data-exercise-btn="fill_in_the_blank">Play</button>
-                    </div>
+                            <!-- Fill in the Blank -->
+                            <div class="activity-icon" data-exercise="fill_in_the_blank">
+                                <div class="icon-graphic">
+                                    <svg viewBox="0 0 60 60" class="activity-svg">
+                                        <rect x="5" y="5" width="50" height="50" rx="5" fill="#64B5F6" stroke="#1976D2" stroke-width="2"/>
+                                        <line x1="10" y1="25" x2="25" y2="25" stroke="white" stroke-width="3"/>
+                                        <line x1="30" y1="25" x2="50" y2="25" stroke="white" stroke-width="3" stroke-dasharray="5,5"/>
+                                        <line x1="10" y1="35" x2="50" y2="35" stroke="white" stroke-width="3"/>
+                                    </svg>
+                                </div>
+                                <div class="icon-label">Fill Blank</div>
+                                <div class="difficulty-indicator easy">Easy</div>
+                                <div class="score-bubble"></div>
+                            </div>
 
-                    <!-- Spelling Card -->
-                    <div class="exercise-card locked" data-exercise="spelling">
-                        <div class="exercise-header">
-                            <h3>Spelling</h3>
-                            <span class="difficulty-badge medium">Medium</span>
-                        </div>
-                        <p class="exercise-description">Type the correct spelling of vocabulary words.</p>
-                        <div class="exercise-scores"></div>
-                        <div class="lock-overlay">
-                            <span class="lock-icon">🔒</span>
-                            <p>Score 80%+ on Fill-in-Blank (Moderate) to unlock</p>
-                        </div>
-                        <button class="btn btn-exercise" data-exercise-btn="spelling" disabled>Locked</button>
-                    </div>
+                            <!-- Spelling -->
+                            <div class="activity-icon locked" data-exercise="spelling">
+                                <div class="icon-graphic">
+                                    <svg viewBox="0 0 60 60" class="activity-svg">
+                                        <rect x="5" y="5" width="50" height="50" rx="5" fill="#9C27B0" stroke="#6A1B9A" stroke-width="2"/>
+                                        <text x="30" y="25" text-anchor="middle" font-size="16" font-weight="bold" fill="white">ABC</text>
+                                        <line x1="15" y1="35" x2="45" y2="35" stroke="white" stroke-width="2"/>
+                                        <circle cx="20" cy="45" r="2" fill="white"/>
+                                        <circle cx="30" cy="45" r="2" fill="white"/>
+                                        <circle cx="40" cy="45" r="2" fill="white"/>
+                                    </svg>
+                                </div>
+                                <div class="icon-label">Spelling</div>
+                                <div class="difficulty-indicator medium">Medium</div>
+                                <div class="score-bubble"></div>
+                                <div class="lock-icon">🔒</div>
+                            </div>
 
-                    <!-- Bubble Pop Card -->
-                    <div class="exercise-card locked" data-exercise="bubble_pop">
-                        <div class="exercise-header">
-                            <h3>Bubble Pop</h3>
-                            <span class="difficulty-badge hard">Hard</span>
-                        </div>
-                        <p class="exercise-description">Click on bubbles with correct or incorrect spelling.</p>
-                        <div class="exercise-scores"></div>
-                        <div class="lock-overlay">
-                            <span class="lock-icon">🔒</span>
-                            <p>Score 80%+ on Spelling (Hard) to unlock</p>
-                        </div>
-                        <button class="btn btn-exercise" data-exercise-btn="bubble_pop" disabled>Locked</button>
-                    </div>
+                            <!-- Bubble Pop -->
+                            <div class="activity-icon locked" data-exercise="bubble_pop">
+                                <div class="icon-graphic">
+                                    <svg viewBox="0 0 60 60" class="activity-svg">
+                                        <circle cx="20" cy="25" r="12" fill="#FF5722" stroke="#D84315" stroke-width="2" opacity="0.8"/>
+                                        <circle cx="40" cy="20" r="10" fill="#FF5722" stroke="#D84315" stroke-width="2" opacity="0.8"/>
+                                        <circle cx="30" cy="40" r="14" fill="#FF5722" stroke="#D84315" stroke-width="2" opacity="0.8"/>
+                                        <text x="30" y="44" text-anchor="middle" font-size="12" font-weight="bold" fill="white">POP</text>
+                                    </svg>
+                                </div>
+                                <div class="icon-label">Bubble Pop</div>
+                                <div class="difficulty-indicator hard">Hard</div>
+                                <div class="score-bubble"></div>
+                                <div class="lock-icon">🔒</div>
+                            </div>
 
-                    <!-- Fluent Reading Card -->
-                    <div class="exercise-card locked" data-exercise="fluent_reading">
-                        <div class="exercise-header">
-                            <h3>Fluent Reading</h3>
-                            <span class="difficulty-badge hard">Hard</span>
+                            <!-- Fluent Reading -->
+                            <div class="activity-icon locked" data-exercise="fluent_reading">
+                                <div class="icon-graphic">
+                                    <svg viewBox="0 0 60 60" class="activity-svg">
+                                        <path d="M10 10 L50 10 L50 50 L10 50 Z" fill="#FF5722" stroke="#D84315" stroke-width="2"/>
+                                        <path d="M30 10 L30 50" stroke="#D84315" stroke-width="2"/>
+                                        <line x1="15" y1="20" x2="25" y2="20" stroke="white" stroke-width="2"/>
+                                        <line x1="15" y1="27" x2="25" y2="27" stroke="white" stroke-width="2"/>
+                                        <line x1="15" y1="34" x2="25" y2="34" stroke="white" stroke-width="2"/>
+                                        <line x1="35" y1="20" x2="45" y2="20" stroke="white" stroke-width="2"/>
+                                        <line x1="35" y1="27" x2="45" y2="27" stroke="white" stroke-width="2"/>
+                                        <line x1="35" y1="34" x2="45" y2="34" stroke="white" stroke-width="2"/>
+                                    </svg>
+                                </div>
+                                <div class="icon-label">Fluent Read</div>
+                                <div class="difficulty-indicator hard">Hard</div>
+                                <div class="score-bubble"></div>
+                                <div class="lock-icon">🔒</div>
+                            </div>
                         </div>
-                        <p class="exercise-description">Practice reading fluency with streaming text display.</p>
-                        <div class="exercise-scores"></div>
-                        <div class="lock-overlay">
-                            <span class="lock-icon">🔒</span>
-                            <p>Score 80%+ on Bubble Pop (Hard) to unlock</p>
-                        </div>
-                        <button class="btn btn-exercise" data-exercise-btn="fluent_reading" disabled>Locked</button>
-                    </div>
+                    </aside>
 
-                    <!-- More exercises can be added here -->
+                    <!-- Right Content Area -->
+                    <div class="content-area">
+                        <!-- Media Display Area -->
+                        <div class="media-display">
+                            <div class="welcome-content">
+                                <h2>🏴‍☠️ Welcome to Pirate Vocabulary Adventure!</h2>
+                                <p>Choose an activity from the left to begin your learning journey.</p>
+                                <div class="pirate-ship">⛵</div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Window (Fixed, No Collapse) - Main Tutor Only -->
+                        <div class="chat-window-fixed">
+                            <div class="chat-header-simple">
+                                <h3>Main Tutor</h3>
+                            </div>
+                            <div class="chat-messages-area" id="mainChatMessages">
+                                <!-- LLM tutor greeting will be displayed here -->
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" class="chat-input-field" placeholder="Ask me anything..." id="mainChatInput">
+                                <button class="chat-send-button" id="mainChatSend">Send</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Multiple Choice Exercise Screen -->
-            <div id="multipleChoiceScreen" class="screen">
+            <div id="multipleChoiceScreen" class="screen with-chat">
                 <!-- Exercise Settings -->
                 <div id="mcSettingsPanel" class="settings-panel">
                     <h2>Multiple Choice Exercise</h2>
@@ -169,6 +219,26 @@
                         <div id="mcFeedback" class="feedback" style="display: none;">
                             <!-- Feedback will be shown here -->
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Exercise Chat Panel -->
+                <div id="mcChatPanel" class="exercise-chat-panel" style="display: none;">
+                    <div class="exercise-chat-header">
+                        <div class="chat-title">
+                            <span class="chat-icon">🎯</span>
+                            <span>Activity Helper</span>
+                        </div>
+                        <div class="chat-controls">
+                            <button class="chat-btn" id="mcChatMinimize" title="Minimize">_</button>
+                        </div>
+                    </div>
+                    <div class="exercise-chat-messages" id="mcChatMessages">
+                        <!-- Messages will be added here -->
+                    </div>
+                    <div class="exercise-chat-input">
+                        <input type="text" id="mcChatInput" placeholder="Ask for help...">
+                        <button id="mcChatSend">Send</button>
                     </div>
                 </div>
             </div>
@@ -517,6 +587,7 @@
     
     <!-- Utilities -->
     <script src="js/utils/ErrorHandler.js"></script>
+    <script src="js/utils/ClickToStart.js"></script>
     
     <!-- Shared Components -->
     <script src="js/components/CanvasRenderer.js"></script>
@@ -533,14 +604,18 @@
     <script src="js/curriculum.js"></script>
     <script src="js/scoreManager.js"></script>
     
-    <!-- Legacy Exercises (to be migrated) -->
-    <script src="js/fillInBlank.js"></script>
-    <script src="js/spellingExercise.js"></script>
-    
     <!-- Modular Exercises -->
     <!-- Multiple Choice -->
     <script src="js/exercises/multipleChoice/MultipleChoiceExercise.js"></script>
     <script src="js/exercises/multipleChoice/MultipleChoiceUI.js"></script>
+    
+    <!-- Fill in the Blank -->
+    <script src="js/exercises/fillInBlank/FillInBlankExercise.js"></script>
+    <script src="js/exercises/fillInBlank/FillInBlankUI.js"></script>
+    
+    <!-- Spelling -->
+    <script src="js/exercises/spelling/SpellingExercise.js"></script>
+    <script src="js/exercises/spelling/SpellingUI.js"></script>
     
     <!-- Bubble Pop -->
     <script src="js/exercises/bubblePop/BubblePopExercise.js"></script>

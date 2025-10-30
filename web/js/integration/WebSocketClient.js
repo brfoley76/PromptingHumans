@@ -111,7 +111,58 @@ class WebSocketClient {
     }
 
     /**
-     * Send a game event
+     * Send activity start event
+     * @param {string} activity - Activity type
+     * @param {string} difficulty - Difficulty level
+     */
+    sendActivityStart(activity, difficulty) {
+        this.send({
+            type: 'activity_start',
+            activity: activity,
+            difficulty: difficulty
+        });
+    }
+
+    /**
+     * Send activity end event
+     * @param {number} score - Final score
+     * @param {number} total - Total possible score
+     */
+    sendActivityEnd(score, total) {
+        this.send({
+            type: 'activity_end',
+            score: score,
+            total: total
+        });
+    }
+
+    /**
+     * Send activity-specific chat message
+     * @param {string} message - Message text
+     */
+    sendActivityChat(message) {
+        this.send({
+            type: 'activity_chat',
+            message: message
+        });
+    }
+
+    /**
+     * Send activity event (wrong answer, correct answer, etc.)
+     * @param {string} event - Event type
+     * @param {object} context - Event context
+     */
+    sendActivityEvent(event, context) {
+        console.log(`[BREADCRUMB][WEBSOCKET] Sending activity_event: ${event}`);
+        this.send({
+            type: 'activity_event',
+            event: event,
+            context: context
+        });
+    }
+
+    /**
+     * Send a game event (legacy)
      * @param {string} event - Event type (e.g., 'wrong_answer')
      * @param {object} context - Event context
      */
@@ -124,7 +175,7 @@ class WebSocketClient {
     }
 
     /**
-     * Request a hint
+     * Request a hint (legacy)
      * @param {object} context - Context for the hint request
      */
     requestHint(context) {

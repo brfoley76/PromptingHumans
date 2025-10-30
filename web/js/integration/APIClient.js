@@ -48,16 +48,14 @@ class APIClient {
 
     /**
      * Initialize a new session
-     * @param {string} name - Student name (for new student)
-     * @param {string} studentId - Existing student ID (optional)
+     * @param {string} username - Student username (required)
      * @param {string} moduleId - Curriculum module ID (default: r003.1)
      */
-    async initSession(name = null, studentId = null, moduleId = 'r003.1') {
+    async initSession(username, moduleId = 'r003.1') {
         return this.request('/api/session/init', {
             method: 'POST',
             body: JSON.stringify({
-                name,
-                student_id: studentId,
+                username,
                 module_id: moduleId
             })
         });

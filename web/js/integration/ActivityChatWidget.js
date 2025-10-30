@@ -178,7 +178,15 @@ class ActivityChatWidget {
      * Show the chat widget
      */
     show() {
-        this.container.style.display = 'flex';
+        console.log('[ActivityChatWidget] show() called');
+        console.log('[ActivityChatWidget] Container:', this.container);
+        console.log('[ActivityChatWidget] Container display before:', this.container.style.display);
+        
+        // Use setProperty with important to override any CSS
+        this.container.style.setProperty('display', 'flex', 'important');
+        
+        console.log('[ActivityChatWidget] Container display after:', this.container.style.display);
+        console.log('[ActivityChatWidget] Container computed style:', window.getComputedStyle(this.container).display);
         this.isVisible = true;
         this.scrollToBottom();
     }
@@ -187,6 +195,7 @@ class ActivityChatWidget {
      * Hide the chat widget
      */
     hide() {
+        console.log('[ActivityChatWidget] hide() called');
         this.container.style.display = 'none';
         this.isVisible = false;
     }
@@ -261,15 +270,22 @@ class ActivityChatWidget {
      * @param {object} message - WebSocket message
      */
     handleMessage(message) {
+        console.log('[ActivityChatWidget] Handling message:', message);
+        
         // Only handle messages relevant to activity chat
         if (message.type === 'activity_chat' && message.sender === 'agent') {
+            console.log('[ActivityChatWidget] Adding agent message to chat');
             this.addMessage('agent', message.message);
         } else if (message.type === 'activity_hint') {
+            console.log('[ActivityChatWidget] Adding hint to chat');
             this.addMessage('agent', `💡 ${message.hint}`);
         } else if (message.type === 'activity_feedback') {
+            console.log('[ActivityChatWidget] Adding feedback to chat');
             this.addMessage('agent', message.feedback);
         } else if (message.type === 'connection') {
             this.updateConnectionStatus(message.status);
+        } else {
+            console.log('[ActivityChatWidget] Ignoring message type:', message.type);
         }
     }
 

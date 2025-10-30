@@ -18,6 +18,64 @@ class Config {
     }
 }
 
+/**
+ * Default exercise settings
+ * Used when agent controls difficulty (non-dev mode)
+ */
+const EXERCISE_DEFAULTS = {
+    multiple_choice: {
+        numQuestions: 10,
+        difficulty: '4' // Medium (4 choices)
+    },
+    fill_in_the_blank: {
+        numQuestions: 10,
+        difficulty: 'easy'
+    },
+    spelling: {
+        numQuestions: 10,
+        difficulty: 'easy'
+    },
+    bubble_pop: {
+        duration: 120, // 2 minutes
+        difficulty: 'easy',
+        errorRate: 30
+    },
+    fluent_reading: {
+        speed: 150, // WPM
+        difficulty: 'moderate'
+    }
+};
+
+/**
+ * Agent introduction messages for each exercise/difficulty
+ */
+const AGENT_INSTRUCTIONS = {
+    multiple_choice: {
+        '3': "Hi! Let's practice matching definitions! You'll see a definition and pick the correct word from 3 choices. Click the screen when you're ready to start!",
+        '4': "Ready for some vocabulary practice? You'll match definitions with words, choosing from 4 options. Take your time and click to begin!",
+        '5': "Time for a challenge! Match definitions with the correct words from 5 choices. This will test your vocabulary knowledge. Click when ready!"
+    },
+    fill_in_the_blank: {
+        'easy': "Let's fill in the blanks! Drag the correct words to complete each definition. Only the words you need are available. Click to start!",
+        'moderate': "Fill in the blank time! Drag words to complete definitions. All vocabulary words are available, so choose carefully. Ready? Click to begin!"
+    },
+    spelling: {
+        'easy': "Spelling practice! I'll show you a definition and you type the word. Don't worry, I'll help if you need it. Click to start!",
+        'medium': "Let's work on spelling! Type the correct word for each definition. You'll get one hint if needed. Click when ready!",
+        'hard': "Spelling challenge! Type the correct spelling for each definition. No hints this time - you've got this! Click to begin!"
+    },
+    bubble_pop: {
+        'easy': "Bubble Pop! Hover over bubbles and press Q when you see a correctly spelled word. Misspelled words will float away. Click to start!",
+        'moderate': "Bubble Pop time! Hover over bubbles and press R when you see a misspelled word. Correctly spelled words float away on their own. Ready? Click!",
+        'hard': "Advanced Bubble Pop! Use Q for correct spellings and R for incorrect ones. Watch carefully - they move fast! Click to begin!"
+    },
+    fluent_reading: {
+        'easy': "Fluent Reading practice! Text will stream across the screen at a comfortable pace. Click any word to highlight it. Click to start!",
+        'moderate': "Let's practice reading fluency! Words will stream at a moderate pace. Click words to highlight them and track your reading. Ready? Click!",
+        'hard': "Fluent Reading challenge! Text streams quickly - keep up and click words to highlight. This will test your reading speed! Click to begin!"
+    }
+};
+
 class App {
     constructor() {
         this.curriculumManager = new CurriculumManager();
@@ -27,16 +85,21 @@ class App {
         this.apiClient = new APIClient();
         this.sessionManager = new SessionManager(this.apiClient, this.scoreManager);
         this.wsClient = new WebSocketClient();
-        this.chatWidget = new ChatWidget(this.wsClient);
-        this.activityChatWidget = new ActivityChatWidget(this.wsClient);
+        // Floating widgets removed - using embedded chat only
+        // this.chatWidget = new ChatWidget(this.wsClient);
+        // this.activityChatWidget = new ActivityChatWidget(this.wsClient);
         
         // Initialize Multiple Choice with new modular pattern
         this.multipleChoiceExercise = new MultipleChoiceExercise(this.curriculumManager);
         this.multipleChoiceUI = new MultipleChoiceUI(this, this.multipleChoiceExercise);
         
-        // Legacy exercises (to be migrated)
+        // Initialize Fill in the Blank with new modular pattern
         this.fillInBlankExercise = new FillInBlankExercise(this.curriculumManager);
+        this.fillInBlankUI = new FillInBlankUI(this, this.fillInBlankExercise);
+        
+        // Initialize Spelling with new modular pattern
         this.spellingExercise = new SpellingExercise(this.curriculumManager);
+        this.spellingUI = new SpellingUI(this, this.spellingExercise);
         
         // Initialize Bubble Pop game
         this.bubblePopExercise = new BubblePopExercise(this.curriculumManager);
@@ -61,9 +124,9 @@ class App {
         // Initialize backend session manager
         await this.sessionManager.initialize();
         
-        // Initialize chat widgets
-        this.chatWidget.initialize();
-        this.activityChatWidget.initialize();
+        // Floating widgets removed - using embedded chat only
+        // this.chatWidget.initialize();
+        // this.activityChatWidget.initialize();
         
         // Load curriculum data
         await this.curriculumManager.loadCurriculum();
@@ -250,62 +313,41 @@ class App {
             }
         });
 
-        // Exercise Selection
+        // Exercise Selection - Old card buttons (for backward compatibility)
         document.querySelectorAll('[data-exercise-btn]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const exerciseType = e.target.getAttribute('data-exercise-btn');
                 this.selectExercise(exerciseType);
             });
         });
+        
+        // New Layout - Activity Icon clicks
+        document.querySelectorAll('.activity-icon').forEach(icon => {
+            icon.addEventListener('click', (e) => {
+                // Don't trigger if clicking on a locked icon
+                if (icon.classList.contains('locked')) {
+                    const exerciseType = icon.getAttribute('data-exercise');
+                    alert('This exercise is locked. Complete previous exercises to unlock it!');
+                    return;
+                }
+                
+                const exerciseType = icon.getAttribute('data-exercise');
+                this.selectExercise(exerciseType);
+            });
+        });
+        
+        // Chat Tab Switching
+        document.querySelectorAll('.chat-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = tab.getAttribute('data-tab');
+                this.switchChatTab(tabName);
+            });
+        });
 
         // Multiple Choice Exercise - handled by UI wrapper
-        // Event listeners are set up in MultipleChoiceUI constructor
-
-        // Fill in the Blank Exercise
-        document.getElementById('fibBackBtn').addEventListener('click', () => {
-            this.showScreen('selectionScreen');
-            this.updateExerciseCards();
-        });
-        
-        document.getElementById('fibStartBtn').addEventListener('click', () => {
-            this.startFillInBlank();
-        });
-        
-        document.getElementById('fibCheckBtn').addEventListener('click', () => {
-            this.checkFillInBlankAnswers();
-        });
-
-        // Spelling Exercise
-        document.getElementById('spBackBtn').addEventListener('click', () => {
-            this.showScreen('selectionScreen');
-            this.updateExerciseCards();
-        });
-        
-        document.getElementById('spStartBtn').addEventListener('click', () => {
-            this.startSpelling();
-        });
-        
-        document.getElementById('spSubmitBtn').addEventListener('click', () => {
-            this.submitSpellingAnswer();
-        });
-        
-        document.getElementById('spNextBtn').addEventListener('click', () => {
-            this.nextSpellingQuestion();
-        });
-
-        const spAnswerInput = document.getElementById('spAnswerInput');
-        spAnswerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const submitBtn = document.getElementById('spSubmitBtn');
-                const nextBtn = document.getElementById('spNextBtn');
-                
-                if (!submitBtn.disabled) {
-                    this.submitSpellingAnswer();
-                } else if (nextBtn.style.display !== 'none') {
-                    this.nextSpellingQuestion();
-                }
-            }
-        });
+        // Fill in the Blank Exercise - handled by UI wrapper
+        // Spelling Exercise - handled by UI wrapper
+        // Event listeners are set up in their respective UI constructors
 
         // Results Screen
         document.getElementById('menuBtn').addEventListener('click', () => {
@@ -321,40 +363,69 @@ class App {
         document.addEventListener('keydown', (e) => {
             this.handleKeyPress(e);
         });
+        
+        // Main Tutor Chat
+        const mainChatSend = document.getElementById('mainChatSend');
+        const mainChatInput = document.getElementById('mainChatInput');
+        
+        if (mainChatSend) {
+            mainChatSend.addEventListener('click', () => {
+                this.sendMainChatMessage();
+            });
+        }
+        
+        if (mainChatInput) {
+            mainChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendMainChatMessage();
+                }
+            });
+        }
+        
+        // Setup WebSocket listener for main tutor messages
+        this.setupMainTutorListener();
     }
 
     /**
      * Register a new user
      */
     async registerUser() {
-        const name = document.getElementById('studentName').value.trim();
-        if (name) {
-            // Create local user first
-            this.scoreManager.createUser(name);
+        const username = document.getElementById('studentName').value.trim();
+        
+        // Validate username
+        if (!this.scoreManager.validateUsername(username)) {
+            alert('Username must contain only letters and numbers (no spaces or special characters)');
+            return;
+        }
+        
+        if (username) {
+            try {
+                // Create backend session (which will also set up ScoreManager)
+                const sessionResult = await this.sessionManager.createSession(username);
             
-            // Try to create backend session
-            const userInfo = this.scoreManager.getUserInfo();
-            const sessionResult = await this.sessionManager.createSession(name, userInfo.studentId);
-            
-            if (sessionResult.tutorGreeting) {
-                console.log('Tutor greeting:', sessionResult.tutorGreeting);
-                // Display greeting in chat widget
-                this.chatWidget.displayGreeting(sessionResult.tutorGreeting);
+                if (sessionResult.tutorGreeting) {
+                    console.log('Tutor greeting:', sessionResult.tutorGreeting);
+                    // Display LLM tutor greeting in main chat
+                    this.sendToFixedChat('main', sessionResult.tutorGreeting, 'agent');
+                }
+                
+                if (sessionResult.offline) {
+                    console.log('Running in offline mode');
+                } else {
+                    console.log('Connected to backend, session ID:', sessionResult.sessionId);
+                    if (sessionResult.isReturningStudent) {
+                        console.log('Welcome back! Progress restored.');
+                    }
+                    // Connect WebSocket
+                    this.wsClient.connect(sessionResult.sessionId);
+                }
+                
+                this.showUserInfo();
+                this.showScreen('selectionScreen');
+                this.updateExerciseCards();
+            } catch (error) {
+                alert(error.message);
             }
-            
-            if (sessionResult.offline) {
-                console.log('Running in offline mode');
-            } else {
-                console.log('Connected to backend, session ID:', sessionResult.sessionId);
-                // Connect WebSocket
-                this.wsClient.connect(sessionResult.sessionId);
-                // Show chat widget
-                this.chatWidget.show();
-            }
-            
-            this.showUserInfo();
-            this.showScreen('selectionScreen');
-            this.updateExerciseCards();
         }
     }
 
@@ -362,16 +433,13 @@ class App {
      * Restore backend session on page reload
      */
     async restoreBackendSession() {
-        const userInfo = this.scoreManager.getUserInfo();
-        if (!userInfo) return;
+        const username = this.scoreManager.getCurrentUsername();
+        if (!username) return;
         
-        console.log('Attempting to restore backend session for:', userInfo.name);
+        console.log('Attempting to restore backend session for:', username);
         
         try {
-            const sessionResult = await this.sessionManager.createSession(
-                userInfo.name,
-                userInfo.studentId
-            );
+            const sessionResult = await this.sessionManager.createSession(username);
             
             if (sessionResult.offline) {
                 console.log('Backend unavailable, running in offline mode');
@@ -382,12 +450,6 @@ class App {
             
             // Connect WebSocket
             this.wsClient.connect(sessionResult.sessionId);
-            
-            // Show chat widget
-            this.chatWidget.show();
-            
-            // Display welcome back message
-            this.chatWidget.displayGreeting(`Welcome back, ${userInfo.name}! 👋`);
             
         } catch (error) {
             console.error('Failed to restore backend session:', error);
@@ -407,6 +469,82 @@ class App {
         }
     }
 
+    /**
+     * Switch chat tabs in the new layout
+     */
+    switchChatTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.chat-tab').forEach(tab => {
+            if (tab.getAttribute('data-tab') === tabName) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        
+        // Update tab panels
+        document.querySelectorAll('.chat-tab-panel').forEach(panel => {
+            if (panel.getAttribute('data-panel') === tabName) {
+                panel.classList.add('active');
+            } else {
+                panel.classList.remove('active');
+            }
+        });
+    }
+    
+    /**
+     * Send a message to the fixed chat window
+     * @param {string} tabName - 'main' or 'activity'
+     * @param {string} message - Message text
+     * @param {string} sender - 'agent' or 'student' (default: 'agent')
+     */
+    sendToFixedChat(tabName, message, sender = 'agent') {
+        // Get the appropriate messages container
+        const messagesId = tabName === 'main' ? 'mainChatMessages' : 'activityChatMessages';
+        const messagesContainer = document.getElementById(messagesId);
+        
+        if (!messagesContainer) {
+            console.error(`Chat messages container not found: ${messagesId}`);
+            return;
+        }
+        
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${sender}`;
+        
+        const senderName = sender === 'agent' ? 'Tutor' : 'You';
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+        });
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                <div class="message-sender">${senderName}</div>
+                ${this.escapeHtml(message)}
+                <div class="message-time">${timeStr}</div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    /**
+     * Escape HTML to prevent XSS
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     /**
      * Update exercise cards with scores and lock status
      */
@@ -479,6 +617,55 @@ class App {
             }
         });
 
+        // Update new layout activity icons
+        document.querySelectorAll('.activity-icon').forEach(icon => {
+            const exerciseType = icon.getAttribute('data-exercise');
+            if (!exerciseType || !statuses[exerciseType]) return;
+
+            const status = statuses[exerciseType];
+            
+            // In dev mode, unlock all exercises
+            if (this.isDevMode) {
+                status.unlocked = true;
+            }
+            
+            // Handle lock/unlock status
+            if (status.unlocked) {
+                icon.classList.remove('locked');
+            } else {
+                icon.classList.add('locked');
+            }
+
+            // Update score bubble
+            const scoreBubble = icon.querySelector('.score-bubble');
+            if (scoreBubble) {
+                const bestScore = this.scoreManager.getBestScoreForExercise(exerciseType);
+                
+                if (bestScore && bestScore.highest) {
+                    const percentage = bestScore.highest.percentage;
+                    scoreBubble.textContent = `${percentage}%`;
+                    scoreBubble.style.display = 'flex';
+                    
+                    // Check if this score unlocks the next level (80%+ on hard mode)
+                    const difficulty = bestScore.difficulty;
+                    const isHardMode = (exerciseType === 'multiple_choice' && difficulty === '5') ||
+                                      (exerciseType === 'fill_in_the_blank' && difficulty === 'moderate') ||
+                                      (exerciseType === 'spelling' && difficulty === 'hard') ||
+                                      (exerciseType === 'bubble_pop' && difficulty === 'hard') ||
+                                      (exerciseType === 'fluent_reading' && difficulty === 'hard');
+                    
+                    if (isHardMode && percentage >= 80) {
+                        scoreBubble.classList.add('unlocking');
+                    } else {
+                        scoreBubble.classList.remove('unlocking');
+                    }
+                } else {
+                    scoreBubble.textContent = '';
+                    scoreBubble.style.display = 'none';
+                }
+            }
+        });
+
         // Update dev panel if in dev mode
         if (this.isDevMode) {
             this.updateDevPanel();
@@ -499,13 +686,9 @@ class App {
         if (exerciseType === 'multiple_choice') {
             this.multipleChoiceUI.show();
         } else if (exerciseType === 'fill_in_the_blank') {
-            this.showScreen('fillInBlankScreen');
-            document.getElementById('fibSettingsPanel').style.display = 'block';
-            document.getElementById('fibExercisePanel').style.display = 'none';
+            this.fillInBlankUI.show();
         } else if (exerciseType === 'spelling') {
-            this.showScreen('spellingScreen');
-            document.getElementById('spSettingsPanel').style.display = 'block';
-            document.getElementById('spExercisePanel').style.display = 'none';
+            this.spellingUI.show();
         } else if (exerciseType === 'bubble_pop') {
             this.showScreen('bubblePopScreen');
             this.bubblePopUI.initialize();
@@ -518,318 +701,11 @@ class App {
     }
 
     // Multiple Choice methods removed - now handled by MultipleChoiceUI
+    // Fill in the Blank methods removed - now handled by FillInBlankUI
+    // Spelling methods removed - now handled by SpellingUI
 
     /**
-     * Start Fill in the Blank Exercise
-     */
-    startFillInBlank() {
-        const numQuestions = parseInt(document.getElementById('fibNumQuestions').value);
-        const difficulty = document.getElementById('fibDifficulty').value;
-
-        this.fillInBlankExercise.initialize(numQuestions, difficulty);
-        this.currentExercise = this.fillInBlankExercise;
-
-        document.getElementById('fibSettingsPanel').style.display = 'none';
-        document.getElementById('fibExercisePanel').style.display = 'block';
-
-        this.displayFillInBlankQuestions();
-    }
-
-    /**
-     * Display Fill in the Blank Questions
-     */
-    displayFillInBlankQuestions() {
-        const questions = this.fillInBlankExercise.getAllQuestions();
-        const wordBank = this.fillInBlankExercise.getWordBank();
-
-        // Display word bank
-        const wordBankDiv = document.getElementById('wordBank');
-        wordBankDiv.innerHTML = '';
-        
-        wordBank.forEach(word => {
-            const wordItem = document.createElement('div');
-            wordItem.className = 'word-item';
-            wordItem.textContent = word;
-            wordItem.draggable = true;
-            wordItem.dataset.word = word;
-            
-            this.setupDragHandlers(wordItem);
-            
-            wordBankDiv.appendChild(wordItem);
-        });
-
-        // Display questions
-        const questionsDiv = document.getElementById('fibQuestions');
-        questionsDiv.innerHTML = '';
-        
-        questions.forEach((question, index) => {
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'fib-question';
-            
-            const questionText = document.createElement('div');
-            questionText.className = 'fib-question-text';
-            
-            // Use the fitb field and replace {blank} with the actual blank space
-            let fitbText = question.fitb || `A {blank} is `;
-            // Capitalize the first letter of fitb
-            const capitalizedFitb = this.curriculumManager.capitalizeFirst(fitbText);
-            const fitbWithBlank = capitalizedFitb.replace('{blank}', `<span class="blank-space" data-blank-id="${question.blankId}"></span>`);
-            
-            // Keep definition lowercase (as it comes from data)
-            questionText.innerHTML = `${index + 1}. ${fitbWithBlank}${question.definition}`;
-            
-            questionDiv.appendChild(questionText);
-            questionsDiv.appendChild(questionDiv);
-            
-            // Setup drop zone
-            const blankSpace = questionText.querySelector('.blank-space');
-            this.setupDropZone(blankSpace);
-        });
-
-        this.updateFillInBlankProgress();
-    }
-
-    /**
-     * Setup drag handlers for word items
-     */
-    setupDragHandlers(element) {
-        element.addEventListener('dragstart', (e) => {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', element.dataset.word);
-            element.classList.add('dragging');
-        });
-
-        element.addEventListener('dragend', (e) => {
-            element.classList.remove('dragging');
-        });
-    }
-
-    /**
-     * Setup drop zone for blank spaces
-     */
-    setupDropZone(blankSpace) {
-        blankSpace.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            blankSpace.classList.add('drag-over');
-        });
-
-        blankSpace.addEventListener('dragleave', (e) => {
-            blankSpace.classList.remove('drag-over');
-        });
-
-        blankSpace.addEventListener('drop', (e) => {
-            e.preventDefault();
-            blankSpace.classList.remove('drag-over');
-            
-            const word = e.dataTransfer.getData('text/plain');
-            const blankId = blankSpace.dataset.blankId;
-            
-            // Place word in blank
-            const previousWord = this.fillInBlankExercise.placeWord(blankId, word);
-            
-            // Update display
-            blankSpace.textContent = word;
-            blankSpace.classList.add('filled');
-            
-            // Remove word from word bank
-            const wordItem = document.querySelector(`.word-item[data-word="${word}"]`);
-            if (wordItem) {
-                wordItem.remove();
-            }
-            
-            // If there was a previous word, add it back to word bank
-            if (previousWord) {
-                this.addWordToBank(previousWord);
-            }
-            
-            // Make blank clickable to remove word
-            blankSpace.style.cursor = 'pointer';
-            blankSpace.onclick = () => {
-                const removedWord = this.fillInBlankExercise.removeWord(blankId);
-                if (removedWord) {
-                    blankSpace.textContent = '';
-                    blankSpace.classList.remove('filled', 'correct', 'incorrect');
-                    this.addWordToBank(removedWord);
-                }
-                this.updateFillInBlankProgress();
-            };
-            
-            this.updateFillInBlankProgress();
-        });
-    }
-
-    /**
-     * Add word back to word bank
-     */
-    addWordToBank(word) {
-        const wordBankDiv = document.getElementById('wordBank');
-        const wordItem = document.createElement('div');
-        wordItem.className = 'word-item';
-        wordItem.textContent = word;
-        wordItem.draggable = true;
-        wordItem.dataset.word = word;
-        
-        this.setupDragHandlers(wordItem);
-        wordBankDiv.appendChild(wordItem);
-    }
-
-    /**
-     * Update Fill in the Blank Progress
-     */
-    updateFillInBlankProgress() {
-        const progress = this.fillInBlankExercise.getProgress();
-        
-        document.getElementById('fibFilled').textContent = progress.filled;
-        document.getElementById('fibTotal').textContent = progress.total;
-        document.getElementById('fibProgress').textContent = progress.percentage;
-        
-        const progressFill = document.getElementById('fibProgressFill');
-        progressFill.style.width = `${progress.percentage}%`;
-        
-        // Enable/disable check button
-        document.getElementById('fibCheckBtn').disabled = !this.fillInBlankExercise.areAllBlanksFilled();
-    }
-
-    /**
-     * Check Fill in the Blank Answers
-     */
-    checkFillInBlankAnswers() {
-        const result = this.fillInBlankExercise.checkAnswers();
-        
-        // Show correct/incorrect for each blank
-        const questions = this.fillInBlankExercise.getAllQuestions();
-        questions.forEach(question => {
-            const blankSpace = document.querySelector(`[data-blank-id="${question.blankId}"]`);
-            if (blankSpace) {
-                blankSpace.classList.remove('correct', 'incorrect');
-                blankSpace.classList.add(question.isCorrect ? 'correct' : 'incorrect');
-            }
-        });
-        
-        // Show results after a delay
-        setTimeout(() => {
-            this.showResults('fill_in_the_blank');
-        }, 2000);
-    }
-
-    /**
-     * Start Spelling Exercise
-     */
-    startSpelling() {
-        const numQuestions = parseInt(document.getElementById('spNumQuestions').value);
-        const difficulty = document.getElementById('spDifficulty').value;
-
-        this.spellingExercise.initialize(numQuestions, difficulty);
-        this.currentExercise = this.spellingExercise;
-
-        document.getElementById('spSettingsPanel').style.display = 'none';
-        document.getElementById('spExercisePanel').style.display = 'block';
-
-        this.displaySpellingQuestion();
-    }
-
-    /**
-     * Display Spelling Question
-     */
-    displaySpellingQuestion() {
-        const question = this.spellingExercise.getCurrentQuestion();
-        if (!question) return;
-
-        this.updateSpellingProgress();
-
-        // Display the definition with capitalized first letter
-        const capitalizedDefinition = this.curriculumManager.capitalizeFirst(question.definition);
-        document.getElementById('spQuestionText').innerHTML = `${capitalizedDefinition}: _______`;
-
-        // Clear and focus the input
-        const input = document.getElementById('spAnswerInput');
-        input.value = '';
-        input.classList.remove('correct', 'incorrect');
-        input.disabled = false;
-        input.focus();
-
-        // Reset buttons and feedback
-        document.getElementById('spSubmitBtn').disabled = false;
-        document.getElementById('spNextBtn').style.display = 'none';
-        document.getElementById('spFeedback').style.display = 'none';
-        document.getElementById('spFeedback').className = 'feedback';
-        document.getElementById('spInputFeedback').textContent = '';
-    }
-
-    /**
-     * Submit Spelling Answer
-     */
-    submitSpellingAnswer() {
-        const input = document.getElementById('spAnswerInput');
-        const answer = input.value.trim();
-        
-        if (!answer) return;
-
-        const isCorrect = this.spellingExercise.submitAnswer(answer);
-        
-        this.showSpellingFeedback(isCorrect);
-        
-        // Disable input and submit button
-        input.disabled = true;
-        document.getElementById('spSubmitBtn').disabled = true;
-        
-        // Show visual feedback on input
-        input.classList.add(isCorrect ? 'correct' : 'incorrect');
-        
-        if (this.spellingExercise.isComplete()) {
-            setTimeout(() => {
-                this.showResults('spelling');
-            }, 2000);
-        } else {
-            document.getElementById('spNextBtn').style.display = 'inline-block';
-        }
-        
-        document.getElementById('spScore').textContent = this.spellingExercise.score;
-    }
-
-    /**
-     * Show Spelling Feedback
-     */
-    showSpellingFeedback(isCorrect) {
-        const feedbackDiv = document.getElementById('spFeedback');
-        const question = this.spellingExercise.getCurrentQuestion();
-
-        if (isCorrect) {
-            feedbackDiv.className = 'feedback correct';
-            feedbackDiv.innerHTML = '✓ Correct! Well spelled!';
-        } else {
-            feedbackDiv.className = 'feedback incorrect';
-            feedbackDiv.innerHTML = `✗ Incorrect. The correct spelling is: <strong>${question.word}</strong>`;
-        }
-
-        feedbackDiv.style.display = 'block';
-    }
-
-    /**
-     * Next Spelling Question
-     */
-    nextSpellingQuestion() {
-        this.spellingExercise.nextQuestion();
-        this.displaySpellingQuestion();
-    }
-
-    /**
-     * Update Spelling Progress
-     */
-    updateSpellingProgress() {
-        const progress = this.spellingExercise.getProgress();
-        
-        document.getElementById('spCurrentQuestion').textContent = progress.current;
-        document.getElementById('spTotalQuestions').textContent = progress.total;
-        document.getElementById('spScore').textContent = progress.score;
-        
-        const progressFill = document.getElementById('spProgressFill');
-        progressFill.style.width = `${progress.percentage}%`;
-    }
-
-    /**
-     * Show Results Screen
+     * Show Results - Return to main page and get LLM summary
      */
     showResults(exerciseType, results = null) {
         let difficulty;
@@ -855,52 +731,26 @@ class App {
         // Record score
         this.scoreManager.recordScore(exerciseType, difficulty, results.score, results.total);
         
-        // Update results display
-        document.getElementById('finalScore').textContent = results.score;
-        document.getElementById('finalTotal').textContent = results.total;
-        document.getElementById('percentage').textContent = `${results.percentage}%`;
-        document.getElementById('resultsMessage').textContent = results.message;
+        // Send results to backend for LLM summary
+        if (this.wsClient && this.wsClient.isConnected()) {
+            this.wsClient.send({
+                type: 'exercise_complete',
+                exercise_type: exerciseType,
+                difficulty: difficulty,
+                score: results.score,
+                total: results.total,
+                percentage: results.percentage,
+                answers: results.answers
+            });
+            console.log('[BREADCRUMB][RESULTS] Sent exercise results to backend for LLM summary');
+        }
         
-        // Create summary list
-        const summaryList = document.getElementById('resultsSummary');
-        summaryList.innerHTML = '';
+        // Return to main page
+        this.showScreen('selectionScreen');
+        this.updateExerciseCards();
         
-        results.answers.forEach(answer => {
-            const li = document.createElement('li');
-            li.className = answer.isCorrect ? 'correct-answer' : 'incorrect-answer';
-            
-            const icon = answer.isCorrect ? '✓' : '✗';
-            
-            if (exerciseType === 'multiple_choice') {
-                li.innerHTML = `
-                    <strong>Q${answer.questionNumber}:</strong> ${answer.definition}<br>
-                    <span style="color: ${answer.isCorrect ? '#28a745' : '#dc3545'}">
-                        ${icon} Your answer: ${answer.userAnswer}
-                        ${!answer.isCorrect ? `<br>Correct answer: ${answer.correctAnswer}` : ''}
-                    </span>
-                `;
-            } else if (exerciseType === 'fill_in_the_blank') {
-                li.innerHTML = `
-                    <strong>Q${answer.questionNumber}:</strong> A _____ is ${answer.definition}<br>
-                    <span style="color: ${answer.isCorrect ? '#28a745' : '#dc3545'}">
-                        ${icon} Your answer: ${answer.userAnswer}
-                        ${!answer.isCorrect ? `<br>Correct answer: ${answer.word}` : ''}
-                    </span>
-                `;
-            } else if (exerciseType === 'spelling') {
-                li.innerHTML = `
-                    <strong>Q${answer.questionNumber}:</strong> ${answer.definition}: _______<br>
-                    <span style="color: ${answer.isCorrect ? '#28a745' : '#dc3545'}">
-                        ${icon} Your answer: ${answer.userAnswer}
-                        ${!answer.isCorrect ? `<br>Correct spelling: ${answer.correctAnswer}` : ''}
-                    </span>
-                `;
-            }
-            
-            summaryList.appendChild(li);
-        });
-        
-        this.showScreen('resultsScreen');
+        // Display a brief message in main chat while waiting for LLM
+        this.sendToFixedChat('main', '📊 Analyzing your results...', 'agent');
     }
 
     /**
@@ -910,15 +760,9 @@ class App {
         if (this.currentExerciseType === 'multiple_choice') {
             this.multipleChoiceUI.show();
         } else if (this.currentExerciseType === 'fill_in_the_blank') {
-            this.fillInBlankExercise.reset();
-            this.showScreen('fillInBlankScreen');
-            document.getElementById('fibSettingsPanel').style.display = 'block';
-            document.getElementById('fibExercisePanel').style.display = 'none';
+            this.fillInBlankUI.show();
         } else if (this.currentExerciseType === 'spelling') {
-            this.spellingExercise.reset();
-            this.showScreen('spellingScreen');
-            document.getElementById('spSettingsPanel').style.display = 'block';
-            document.getElementById('spExercisePanel').style.display = 'none';
+            this.spellingUI.show();
         } else if (this.currentExerciseType === 'bubble_pop') {
             // For Bubble Pop, restart with the same settings
             this.showScreen('bubblePopScreen');
@@ -934,31 +778,53 @@ class App {
 
     /**
      * Handle keyboard navigation
+     * Legacy keyboard shortcuts removed - exercises now handle their own keyboard events
      */
     handleKeyPress(event) {
-        const mcExercisePanel = document.getElementById('mcExercisePanel');
-        
-        if (mcExercisePanel && mcExercisePanel.style.display !== 'none') {
-            // Number keys 1-5 for selecting answers
-            if (event.key >= '1' && event.key <= '5') {
-                const optionIndex = parseInt(event.key) - 1;
-                const options = document.querySelectorAll('.answer-option input[type="radio"]');
-                if (options[optionIndex]) {
-                    options[optionIndex].click();
-                }
-            }
+        // Keyboard shortcuts moved to individual exercise UI classes
+        // This prevents conflicts and allows each exercise to define its own shortcuts
+    }
 
-            // Enter key to submit or go to next question
-            if (event.key === 'Enter') {
-                const submitBtn = document.getElementById('mcSubmitBtn');
-                const nextBtn = document.getElementById('mcNextBtn');
-                
-                if (!submitBtn.disabled) {
-                    this.submitMultipleChoiceAnswer();
-                } else if (nextBtn.style.display !== 'none') {
-                    this.nextMultipleChoiceQuestion();
+    /**
+     * Setup WebSocket listener for main tutor messages
+     */
+    setupMainTutorListener() {
+        if (this.wsClient) {
+            this.wsClient.addMessageHandler((message) => {
+                if (message.type === 'chat' && message.sender === 'agent') {
+                    console.log('[BREADCRUMB][MAIN] Displaying tutor message');
+                    this.sendToFixedChat('main', message.message, 'agent');
                 }
-            }
+            });
+            console.log('[BREADCRUMB][MAIN] Tutor listener added');
+        }
+    }
+    
+    /**
+     * Send main chat message to tutor
+     */
+    sendMainChatMessage() {
+        const input = document.getElementById('mainChatInput');
+        if (!input) return;
+        
+        const message = input.value.trim();
+        if (!message) return;
+        
+        console.log('[BREADCRUMB][MAIN] Sending message:', message);
+        
+        // Display user message
+        this.sendToFixedChat('main', message, 'student');
+        input.value = '';
+        
+        // Send to backend via WebSocket
+        if (this.wsClient && this.wsClient.isConnected()) {
+            this.wsClient.send({
+                type: 'chat',
+                message: message
+            });
+            console.log('[BREADCRUMB][MAIN] Message sent to backend');
+        } else {
+            console.log('[BREADCRUMB][MAIN] ERROR: WebSocket not connected');
         }
     }
 

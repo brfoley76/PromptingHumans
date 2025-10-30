@@ -317,7 +317,7 @@ class BubblePopUI {
         // Send metacognitive prompts to activity chat
         if (this.app.activityChatWidget) {
             const behavior = BubblePopExercise.DIFFICULTY_BEHAVIORS[settings.difficulty];
-            if (behavior && behavior.metacognitivePrompts) {
+            if (behavior && behavior.metacognitivePrompts && behavior.prompts) {
                 // Send completion event with prompts
                 this.app.activityChatWidget.sendActivityEvent('activity_complete', {
                     activity: 'bubble_pop',

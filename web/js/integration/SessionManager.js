@@ -32,22 +32,29 @@ class SessionManager {
     }
 
     /**
-     * Create or resume session
-     * @param {string} name - Student name
-     * @param {string} existingStudentId - Existing student ID from localStorage (optional)
+     * Create or resume session with username
+     * @param {string} username - Student username
      */
-    async createSession(name, existingStudentId = null) {
+    async createSession(username) {
+        // Validate username
+        if (!this.scoreManager.validateUsername(username)) {
+            throw new Error('Invalid username: must contain only letters and numbers');
+        }
+
         if (!this.backendAvailable) {
             console.log('Backend unavailable, using localStorage only');
+            // Set user in ScoreManager (creates if new)
+            this.scoreManager.setUser(username);
             return {
                 offline: true,
-                studentId: existingStudentId || this.scoreManager.getUserInfo()?.studentId
+                studentId: username,
+                username: username
             };
         }
 
         try {
-            // Try to initialize session with backend
-            const response = await this.apiClient.initSession(name, existingStudentId);
+            // Initialize session with backend using username
+            const response = await this.apiClient.initSession(username);
             
             this.sessionId = response.session_id;
             this.studentId = response.student_id;
@@ -56,26 +63,32 @@ class SessionManager {
             console.log('Session created:', {
                 sessionId: this.sessionId,
                 studentId: this.studentId,
-                studentName: response.student_name
+                studentName: response.student_name,
+                isReturning: response.is_returning_student
             });
 
-            // Sync with localStorage
-            this._syncStudentToLocalStorage(response);
+            // Set user in ScoreManager and merge backend progress
+            this.scoreManager.setUser(username, response.progress);
 
             return {
                 offline: false,
                 sessionId: this.sessionId,
                 studentId: this.studentId,
+                username: username,
                 tutorGreeting: response.tutor_greeting,
-                availableActivities: response.available_activities
+                availableActivities: response.available_activities,
+                isReturningStudent: response.is_returning_student,
+                progress: response.progress
             };
         } catch (error) {
             console.error('Failed to create backend session:', error);
             // Fall back to localStorage
+            this.scoreManager.setUser(username);
             return {
                 offline: true,
                 error: error.message,
-                studentId: existingStudentId || this.scoreManager.getUserInfo()?.studentId
+                studentId: username,
+                username: username
             };
         }
     }

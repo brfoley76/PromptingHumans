@@ -4,27 +4,26 @@
 
 class ScoreManager {
     constructor() {
-        this.storageKey = 'learningModuleData';
-        this.userData = this.loadUserData();
+        this.storageKeyPrefix = 'learningModuleData_';
+        this.currentUsername = null;
+        this.userData = null;
     }
 
     /**
-     * Generate a random student ID
+     * Validate username (alphanumeric only)
      */
-    generateStudentId() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let randomId = '';
-        for (let i = 0; i < 12; i++) {
-            randomId += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return 'read_' + randomId;
+    validateUsername(username) {
+        return username && /^[a-zA-Z0-9]+$/.test(username);
     }
 
     /**
-     * Load user data from localStorage
+     * Load user data from localStorage for a specific username
      */
-    loadUserData() {
-        const stored = localStorage.getItem(this.storageKey);
+    loadUserData(username) {
+        if (!username) return null;
+        
+        const storageKey = this.storageKeyPrefix + username;
+        const stored = localStorage.getItem(storageKey);
         if (stored) {
             return JSON.parse(stored);
         }
@@ -35,23 +34,89 @@ class ScoreManager {
      * Save user data to localStorage
      */
     saveUserData() {
-        localStorage.setItem(this.storageKey, JSON.stringify(this.userData));
+        if (!this.currentUsername) return;
+        
+        const storageKey = this.storageKeyPrefix + this.currentUsername;
+        localStorage.setItem(storageKey, JSON.stringify(this.userData));
     }
 
     /**
      * Check if user exists
      */
     hasUser() {
-        return this.userData !== null;
+        return this.userData !== null && this.currentUsername !== null;
+    }
+
+    /**
+     * Set current user and load their data
+     */
+    setUser(username, backendProgress = null) {
+        if (!this.validateUsername(username)) {
+            throw new Error('Invalid username: must contain only letters and numbers');
+        }
+        
+        this.currentUsername = username;
+        this.userData = this.loadUserData(username);
+        
+        if (!this.userData) {
+            // Create new user data
+            this.createUser(username);
+        }
+        
+        // Merge backend progress if provided
+        if (backendProgress) {
+            this.mergeBackendProgress(backendProgress);
+        }
+        
+        return this.userData;
+    }
+
+    /**
+     * Merge backend progress with local data
+     */
+    mergeBackendProgress(backendProgress) {
+        if (!this.userData) return;
+        
+        // Update unlock states from backend
+        for (const [exerciseType, progressData] of Object.entries(backendProgress)) {
+            if (this.userData.exercises[exerciseType]) {
+                this.userData.exercises[exerciseType].unlocked = progressData.unlocked;
+                
+                // Update scores if backend has better data
+                if (progressData.best_score && progressData.best_score.score > 0) {
+                    const difficultyKey = `difficulty_${progressData.best_score.difficulty}`;
+                    
+                    if (!this.userData.exercises[exerciseType].scores[difficultyKey]) {
+                        this.userData.exercises[exerciseType].scores[difficultyKey] = {
+                            highest: { score: 0, total: 0, percentage: 0, date: null },
+                            recent: { score: 0, total: 0, percentage: 0, date: null },
+                            attempts: 0
+                        };
+                    }
+                    
+                    // Backend data takes precedence
+                    const backendScore = progressData.best_score;
+                    this.userData.exercises[exerciseType].scores[difficultyKey].highest = {
+                        score: backendScore.score,
+                        total: backendScore.total,
+                        percentage: backendScore.percentage,
+                        date: new Date().toISOString()
+                    };
+                    this.userData.exercises[exerciseType].scores[difficultyKey].attempts = progressData.attempts;
+                }
+            }
+        }
+        
+        this.saveUserData();
     }
 
     /**
      * Create a new user
      */
-    createUser(name) {
+    createUser(username) {
         this.userData = {
-            name: name,
-            studentId: this.generateStudentId(),
+            name: username,
+            studentId: username,  // Username is the student ID
             createdAt: new Date().toISOString(),
             exercises: {
                 multiple_choice: {
@@ -213,8 +278,27 @@ class ScoreManager {
      * Reset all user data (for testing/debugging)
      */
     resetUserData() {
-        localStorage.removeItem(this.storageKey);
+        if (this.currentUsername) {
+            const storageKey = this.storageKeyPrefix + this.currentUsername;
+            localStorage.removeItem(storageKey);
+        }
         this.userData = null;
+        this.currentUsername = null;
+    }
+    
+    /**
+     * Logout current user
+     */
+    logout() {
+        this.currentUsername = null;
+        this.userData = null;
+    }
+    
+    /**
+     * Get current username
+     */
+    getCurrentUsername() {
+        return this.currentUsername;
     }
 
     /**
