@@ -22,6 +22,26 @@ An interactive educational platform for 3rd-grade reading and spelling exercises
 
 ## Features
 
+### Backend Integration
+
+The learning module is fully integrated with a Python backend that provides:
+
+- **REST API** for session and activity management
+- **WebSocket** for real-time chat communication
+- **LLM-Powered Agents** (TutorAgent and ActivityAgent)
+- **Database Persistence** (SQLite for development)
+- **Adaptive Difficulty** based on performance history
+- **Progress Tracking** across sessions
+
+**Backend Location:** `../prompting_human_agent/backend/`
+
+**Key Integration Components:**
+- `APIClient.js` - REST API wrapper
+- `SessionManager.js` - Session lifecycle management
+- `WebSocketClient.js` - Real-time WebSocket communication
+- `ChatWidget.js` - Main tutor chat interface
+- `ActivityChatWidget.js` - Activity-specific chat interface
+
 ### Progressive Exercise System
 The learning module features a carefully designed progression system where students advance through increasingly challenging exercises:
 
@@ -56,19 +76,34 @@ web/
 │   ├── components/
 │   │   ├── CanvasRenderer.js         # Canvas rendering utilities
 │   │   └── InputHandler.js           # Input event management
+│   ├── integration/
+│   │   ├── APIClient.js              # REST API wrapper
+│   │   ├── SessionManager.js         # Session lifecycle
+│   │   ├── WebSocketClient.js        # WebSocket communication
+│   │   ├── ChatWidget.js             # Main tutor chat
+│   │   └── ActivityChatWidget.js     # Activity helper chat
 │   ├── exercises/
+│   │   ├── multipleChoice/
+│   │   │   ├── MultipleChoiceExercise.js
+│   │   │   └── MultipleChoiceUI.js
+│   │   ├── fillInBlank/
+│   │   │   ├── FillInBlankExercise.js
+│   │   │   └── FillInBlankUI.js
+│   │   ├── spelling/
+│   │   │   ├── SpellingExercise.js
+│   │   │   └── SpellingUI.js
 │   │   ├── bubblePop/
-│   │   │   ├── BubblePopExercise.js  # Game logic
-│   │   │   └── BubblePopUI.js        # UI management
+│   │   │   ├── BubblePopExercise.js
+│   │   │   └── BubblePopUI.js
 │   │   └── fluentReading/
 │   │       ├── FluentReadingExercise.js
 │   │       └── FluentReadingUI.js
+│   ├── utils/
+│   │   ├── ErrorHandler.js           # Error handling
+│   │   └── ClickToStart.js           # Click-to-start overlay
 │   ├── app.js                        # Main application controller
 │   ├── curriculum.js                 # Curriculum data management
-│   ├── scoreManager.js               # Score and progress tracking
-│   ├── multipleChoice.js             # Legacy exercise (to be migrated)
-│   ├── fillInBlank.js                # Legacy exercise (to be migrated)
-│   └── spellingExercise.js           # Legacy exercise (to be migrated)
+│   └── scoreManager.js               # Score and progress tracking
 ```
 
 ### Key Components
@@ -232,19 +267,24 @@ This project is part of the PromptingHumans educational initiative.
 
 ## Known Issues
 
-- Some legacy exercises need migration to the modular framework
 - Mobile keyboard may overlap input fields on smaller screens
 - Audio feedback system planned but not yet implemented
+- Backend requires separate startup (see backend documentation)
 
 ## Roadmap
 
-- [ ] Migrate legacy exercises to ExerciseFramework
+- [x] Migrate all exercises to ExerciseFramework
+- [x] Backend integration with REST API and WebSocket
+- [x] LLM-powered tutor and activity agents
+- [x] Embedded chat architecture
+- [x] Exercise completion with LLM summaries
 - [ ] Add audio pronunciation support
 - [ ] Implement multiplayer/classroom mode
 - [ ] Add progress reporting for teachers
 - [ ] Create exercise builder interface
 - [ ] Add more curriculum modules
-- [ ] Implement adaptive difficulty system
+- [ ] Enhanced analytics dashboard
+- [ ] A/B testing framework
 
 ## Support
 

@@ -6,20 +6,26 @@ This document describes the implementation of activity-specific helper chat agen
 
 ## Architecture
 
-### Dual Chat System
+### Embedded Chat System
 
-1. **Main Tutor Chat** (`ChatWidget.js`)
-   - Persistent across the application
-   - Available on the main menu screen
+The application uses an **embedded chat architecture** where chat panels are integrated directly into the UI:
+
+1. **Main Tutor Chat**
+   - Embedded in the selection screen (right side, fixed panel)
+   - Persistent across main menu navigation
    - Provides general guidance and encouragement
-   - Positioned bottom-right corner
+   - Always visible on selection screen
+   - Uses LLM-powered TutorAgent
 
-2. **Activity Helper Chat** (`ActivityChatWidget.js`)
+2. **Activity Helper Chat**
+   - Embedded in exercise screens (right panel)
    - Temporary, scoped to single activity attempt
    - Only visible during active exercises
    - Provides activity and difficulty-specific assistance
-   - Positioned bottom-left corner (or stacks on mobile)
    - Automatically clears between attempts
+   - Uses LLM-powered ActivityAgent
+
+**Note:** Previous versions used floating widgets positioned at bottom-right and bottom-left. The current implementation uses fixed, embedded panels for better UX and mobile compatibility.
 
 ## Key Design Principles
 
@@ -29,12 +35,16 @@ This document describes the implementation of activity-specific helper chat agen
 
 ```javascript
 // Frontend sends structured events with full context
-activityChat.sendActivityEvent('wrong_answer', {
-  question: currentQuestion,
-  userAnswer: selectedAnswer,
-  difficulty: 'easy',
-  behavior: 'immediate_hint',
-  attempt: attemptNumber
+wsClient.send({
+  type: 'activity_event',
+  event: 'wrong_answer',
+  context: {
+    question: currentQuestion,
+    userAnswer: selectedAnswer,
+    correctAnswer: correctWord,
+    difficulty: 'easy',
+    attemptNumber: 1
+  }
 });
 ```
 
@@ -45,27 +55,74 @@ The backend:
 - Does NOT know about specific exercises
 - Responds based on frontend-provided context
 - Loads curriculum dynamically
-- Generates responses using LLM or rule-based logic
+- Generates responses using LLM (TutorAgent, ActivityAgent)
 
 ## Implementation Details
 
-### 1. ActivityChatWidget.js
+### 1. Chat Integration in app.js
 
-**Location:** `web/js/integration/ActivityChatWidget.js`
+**Main Tutor Chat:**
+```javascript
+// Setup in app.js
+setupMainTutorListener() {
+    this.wsClient.addMessageHandler((message) => {
+        if (message.type === 'chat' && message.sender === 'agent') {
+            this.sendToFixedChat('main', message.message, 'agent');
+        }
+    });
+}
 
-**Key Methods:**
-- `startActivity(activityType, difficulty)` - Initialize for new activity
-- `endActivity()` - Clean up and hide
-- `sendActivityEvent(eventType, context)` - Send structured events to backend
-- `addMessage(sender, message)` - Display messages in chat
+sendMainChatMessage() {
+    const message = input.value.trim();
+    this.sendToFixedChat('main', message, 'student');
+    this.wsClient.send({
+        type: 'chat',
+        message: message
+    });
+}
+```
 
-**Features:**
-- Separate message history per activity
-- Auto-clears between attempts
-- WebSocket integration
-- Minimizable interface
+**Activity Helper Chat:**
+- Embedded in exercise screens using `.exercise-chat-panel` CSS class
+- Managed by ActivityChatWidget.js
+- Lifecycle tied to activity start/end
 
-### 2. Difficulty Behavior Configs
+### 2. Exercise Completion Flow (NEW)
+
+**Current Behavior:**
+1. Exercise completes
+2. Return to main page (NOT results screen)
+3. Send results to backend via WebSocket
+4. Backend LLM analyzes performance
+5. Personalized summary displayed in main chat
+
+```javascript
+// In app.js showResults()
+showResults(exerciseType, results) {
+    // Record score locally
+    this.scoreManager.recordScore(exerciseType, difficulty, results.score, results.total);
+    
+    // Send to backend for LLM summary
+    this.wsClient.send({
+        type: 'exercise_complete',
+        exercise_type: exerciseType,
+        difficulty: difficulty,
+        score: results.score,
+        total: results.total,
+        percentage: results.percentage,
+        answers: results.answers  // Full details for analysis
+    });
+    
+    // Return to main page
+    this.showScreen('selectionScreen');
+    this.updateExerciseCards();
+    
+    // Show analyzing message
+    this.sendToFixedChat('main', '📊 Analyzing your results...', 'agent');
+}
+```
+
+### 3. Difficulty Behavior Configs
 
 Each activity defines its own difficulty behaviors:
 
@@ -90,7 +147,7 @@ static DIFFICULTY_BEHAVIORS = {
 }
 ```
 
-### 3. Activity-Specific Logic
+### 4. Activity-Specific Logic
 
 Each activity's UI class controls when and how to interact with the helper chat:
 
@@ -100,13 +157,17 @@ onAnswerSubmit(isCorrect, difficulty) {
   const behavior = MultipleChoiceExercise.DIFFICULTY_BEHAVIORS[difficulty];
   
   if (!isCorrect && behavior.feedbackTiming === 'immediate') {
-    // Send event to activity chat
-    this.app.activityChatWidget.sendActivityEvent('wrong_answer', {
-      question: this.currentQuestion,
-      userAnswer: this.selectedAnswer,
-      correctAnswer: this.currentQuestion.word,
-      difficulty: difficulty,
-      behavior: 'immediate_hint'
+    // Send event to backend via WebSocket
+    this.app.wsClient.send({
+      type: 'activity_event',
+      event: 'wrong_answer',
+      context: {
+        question: this.currentQuestion.definition,
+        userAnswer: this.selectedAnswer,
+        correctAnswer: this.currentQuestion.word,
+        difficulty: difficulty,
+        attemptNumber: this.attemptNumber
+      }
     });
   }
 }
@@ -143,10 +204,6 @@ onAnswerSubmit(isCorrect, difficulty) {
 - One hint per mistake
 - Less hand-holding
 
-**Hard:** (To be implemented)
-- End-only feedback
-- No hints during exercise
-
 ### Spelling
 
 **Easy:**
@@ -174,20 +231,27 @@ onAnswerSubmit(isCorrect, difficulty) {
 
 ## WebSocket Message Format
 
+### Activity Start (Frontend → Backend)
+
+```json
+{
+  "type": "activity_start",
+  "activity": "multiple_choice",
+  "difficulty": "easy"
+}
+```
+
 ### Activity Events (Frontend → Backend)
 
 ```json
 {
   "type": "activity_event",
-  "activity": "multiple_choice",
-  "difficulty": "easy",
   "event": "wrong_answer",
   "context": {
     "question": "A person who sails the seas",
     "userAnswer": "treasure",
     "correctAnswer": "pirate",
-    "behavior": "immediate_hint",
-    "attempt": 1
+    "attemptNumber": 1
   }
 }
 ```
@@ -197,10 +261,37 @@ onAnswerSubmit(isCorrect, difficulty) {
 ```json
 {
   "type": "activity_chat",
-  "activity": "multiple_choice",
-  "difficulty": "easy",
   "sender": "student",
   "message": "I don't understand this word"
+}
+```
+
+### Exercise Complete (Frontend → Backend) - NEW
+
+```json
+{
+  "type": "exercise_complete",
+  "exercise_type": "multiple_choice",
+  "difficulty": "4",
+  "score": 8,
+  "total": 10,
+  "percentage": 80,
+  "answers": [
+    {
+      "questionNumber": 1,
+      "definition": "A person who sails the seas",
+      "userAnswer": "pirate",
+      "correctAnswer": "pirate",
+      "isCorrect": true
+    },
+    {
+      "questionNumber": 2,
+      "definition": "A colorful bird",
+      "userAnswer": "treasure",
+      "correctAnswer": "parrot",
+      "isCorrect": false
+    }
+  ]
 }
 ```
 
@@ -210,21 +301,29 @@ onAnswerSubmit(isCorrect, difficulty) {
 {
   "type": "activity_chat",
   "sender": "agent",
-  "message": "Let me help you think about this..."
+  "message": "Let me help you think about this...",
+  "timestamp": "2025-10-30T14:30:00Z"
 }
 ```
 
 ```json
 {
-  "type": "activity_hint",
-  "hint": "Think about what pirates do on ships"
+  "type": "chat",
+  "sender": "agent",
+  "agent_type": "tutor",
+  "message": "Great job! You got 8 out of 10 correct! I noticed you confused 'pirate' and 'treasure' on question 2...",
+  "timestamp": "2025-10-30T14:35:00Z",
+  "exercise_summary": true
 }
 ```
 
+### Activity End (Frontend → Backend)
+
 ```json
 {
-  "type": "activity_feedback",
-  "feedback": "Great job! You got it right this time!"
+  "type": "activity_end",
+  "score": 8,
+  "total": 10
 }
 ```
 
@@ -232,23 +331,25 @@ onAnswerSubmit(isCorrect, difficulty) {
 
 ### Frontend (Per Activity)
 
-- [ ] Add difficulty behavior config to Exercise class
-- [ ] Update UI class to use ActivityChatWidget
-- [ ] Implement `startActivity()` call when exercise begins
-- [ ] Implement `endActivity()` call when exercise ends
-- [ ] Add `sendActivityEvent()` calls at appropriate points:
-  - [ ] Wrong answers (if immediate feedback)
-  - [ ] Correct answers (if confirmation needed)
-  - [ ] Hint requests
-  - [ ] Activity completion (for metacognitive prompts)
-- [ ] Handle agent responses in UI
+- [x] Add difficulty behavior config to Exercise class
+- [x] Update UI class to use embedded chat
+- [x] Implement `activity_start` WebSocket message when exercise begins
+- [x] Implement `activity_end` WebSocket message when exercise ends
+- [x] Add `activity_event` calls at appropriate points:
+  - [x] Wrong answers (if immediate feedback)
+  - [x] Correct answers (if confirmation needed)
+  - [x] Hint requests
+  - [x] Activity completion (for metacognitive prompts)
+- [x] Handle agent responses in UI
+- [x] Implement `exercise_complete` message with full results
 
 ### Backend
 
-- [ ] Update WebSocket handler to recognize activity events
-- [ ] Implement activity event routing
-- [ ] Add metacognitive prompt generation
-- [ ] Ensure curriculum-agnostic design
+- [x] Update WebSocket handler to recognize activity events
+- [x] Implement activity event routing
+- [x] Add metacognitive prompt generation
+- [x] Ensure curriculum-agnostic design
+- [x] Implement `exercise_complete` handler with LLM summary generation
 
 ## File Structure
 
@@ -256,33 +357,59 @@ onAnswerSubmit(isCorrect, difficulty) {
 web/
 ├── js/
 │   ├── integration/
-│   │   ├── ChatWidget.js              # Main tutor chat
-│   │   ├── ActivityChatWidget.js      # Activity helper chat
+│   │   ├── ChatWidget.js              # Main tutor chat (embedded)
+│   │   ├── ActivityChatWidget.js      # Activity helper chat (embedded)
 │   │   ├── WebSocketClient.js         # WebSocket communication
-│   │   └── SessionManager.js          # Session management
+│   │   ├── SessionManager.js          # Session management
+│   │   └── APIClient.js               # REST API client
 │   ├── exercises/
 │   │   ├── multipleChoice/
 │   │   │   ├── MultipleChoiceExercise.js  # Logic + behavior config
 │   │   │   └── MultipleChoiceUI.js        # UI + chat integration
 │   │   ├── fillInBlank/
+│   │   │   ├── FillInBlankExercise.js
+│   │   │   └── FillInBlankUI.js
 │   │   ├── spelling/
+│   │   │   ├── SpellingExercise.js
+│   │   │   └── SpellingUI.js
 │   │   ├── bubblePop/
+│   │   │   ├── BubblePopExercise.js
+│   │   │   └── BubblePopUI.js
 │   │   └── fluentReading/
+│   │       ├── FluentReadingExercise.js
+│   │       └── FluentReadingUI.js
 │   └── app.js                         # Main app initialization
 ├── css/
 │   ├── chat-widget.css                # Main chat styles
-│   └── activity-chat-widget.css       # Activity chat styles
-└── index.html                         # Includes both chat widgets
+│   ├── activity-chat-widget.css       # Activity chat styles (deprecated)
+│   ├── exercise-chat.css              # Embedded exercise chat styles
+│   └── new-layout.css                 # Main layout with embedded chat
+└── index.html                         # Includes embedded chat panels
 ```
 
-## Next Steps
+## CSS Classes
 
-1. **Implement difficulty configs** for each activity
-2. **Add chat integration** to each activity's UI class
-3. **Update backend WebSocket handler** to support activity events
-4. **Add hard mode** to Fill in the Blank
-5. **Implement metacognitive prompts** for Bubble Pop and Fluent Reading
-6. **Test each difficulty level** for each activity
+### Main Chat (Selection Screen)
+- `.chat-window-fixed` - Fixed chat panel
+- `.chat-messages-area` - Scrollable message container
+- `.chat-input-area` - Input field and send button
+
+### Activity Chat (Exercise Screens)
+- `.exercise-chat-panel` - Embedded chat in exercise
+- `.exercise-chat-messages` - Message container
+- `.exercise-chat-input` - Input area
+- `.exercise-chat-header` - Header with minimize button
+
+## Implementation Status
+
+✅ **Complete:**
+- Embedded chat architecture
+- Main tutor chat with LLM
+- Activity helper chat with LLM
+- Exercise completion flow with LLM summaries
+- All 5 exercises integrated
+- WebSocket message routing
+- Backend agent system (TutorAgent, ActivityAgent)
 
 ## Benefits of This Architecture
 
@@ -310,3 +437,5 @@ web/
 - Context-aware assistance
 - Difficulty-appropriate scaffolding
 - Non-intrusive help when needed
+- Personalized LLM feedback
+- Seamless integration with exercises
