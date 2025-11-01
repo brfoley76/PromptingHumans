@@ -707,7 +707,7 @@ class App {
     /**
      * Show Results - Return to main page and get LLM summary
      */
-    showResults(exerciseType, results = null) {
+    async showResults(exerciseType, results = null) {
         let difficulty;
         
         // If results not provided, get them from the exercise
@@ -728,10 +728,33 @@ class App {
             difficulty = document.getElementById('spDifficulty').value;
         }
         
-        // Record score
+        // Record score locally
         this.scoreManager.recordScore(exerciseType, difficulty, results.score, results.total);
         
-        // Send results to backend for LLM summary
+        // Save to backend database via REST API
+        try {
+            const tuningSettings = { difficulty: difficulty };
+            
+            // Map frontend results format to backend format
+            // Add 'item' and 'correct' fields required by Bayesian proficiency system
+            const backendResults = {
+                score: results.score,
+                total: results.total,
+                item_results: (results.answers || []).map(answer => ({
+                    ...answer,
+                    item: answer.correctAnswer,  // Item identifier for proficiency tracking
+                    correct: answer.isCorrect    // Boolean field expected by backend
+                }))
+            };
+            
+            await this.sessionManager.endActivity(exerciseType, backendResults, tuningSettings);
+            console.log('[BREADCRUMB][RESULTS] Activity results saved to database');
+        } catch (error) {
+            console.error('[BREADCRUMB][RESULTS] Failed to save results to database:', error);
+            // Continue anyway - local score is saved
+        }
+        
+        // Send results to backend for LLM summary via WebSocket
         if (this.wsClient && this.wsClient.isConnected()) {
             this.wsClient.send({
                 type: 'exercise_complete',

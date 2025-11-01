@@ -1,0 +1,154 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'prompting_human_agent/backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'prompting_human_agent/backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: prompting_human_agent/backend/requirements.txt
+    
+    - name: Install dependencies
+      working-directory: prompting_human_agent/backend
+      run: |
+        pip install black flake8 isort mypy
+        pip install -r requirements.txt
+    
+    - name: Run Black
+      working-directory: prompting_human_agent/backend
+      run: black --check src tests
+    
+    - name: Run Flake8
+      working-directory: prompting_human_agent/backend
+      run: flake8 src tests
+    
+    - name: Run isort
+      working-directory: prompting_human_agent/backend
+      run: isort --check-only src tests
+    
+    - name: Run mypy
+      working-directory: prompting_human_agent/backend
+      run: mypy src --ignore-missing-imports || true
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: prompting_human_agent/backend/requirements.txt
+    
+    - name: Install dependencies
+      working-directory: prompting_human_agent/backend
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-asyncio
+    
+    - name: Run tests with coverage
+      working-directory: prompting_human_agent/backend
+      run: |
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: prompting_human_agent/backend/coverage.xml
+        flags: backend
+        name: backend-${{ matrix.python-version }}
+    
+    - name: Upload coverage HTML
+      if: matrix.python-version == '3.11'
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: prompting_human_agent/backend/htmlcov/
+        retention-days: 7
+
+  integration:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      working-directory: prompting_human_agent/backend
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Start backend server
+      working-directory: prompting_human_agent/backend
+      run: |
+        python3 -m src.main &
+        sleep 5
+    
+    - name: Test API endpoints
+      run: |
+        curl -f http://localhost:8001/health || exit 1
+        curl -f http://localhost:8001/ || exit 1
+    
+    - name: Stop backend server
+      run: pkill -f "python3 -m src.main"
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      working-directory: prompting_human_agent/backend
+      run: |
+        pip install safety bandit
+        pip install -r requirements.txt
+    
+    - name: Run Safety check
+      working-directory: prompting_human_agent/backend
+      run: safety check --json || true
+    
+    - name: Run Bandit security scan
+      working-directory: prompting_human_agent/backend
+      run: bandit -r src -f json -o bandit-report.json || true
+    
+    - name: Upload security reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: prompting_human_agent/backend/*-report.json
+        retention-days: 7

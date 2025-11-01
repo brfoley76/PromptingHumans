@@ -4,10 +4,47 @@ An interactive educational platform for 3rd-grade reading and spelling exercises
 
 ## Quick Start
 
+### Prerequisites
+- Python 3.9 or higher
+- Modern web browser (Chrome, Firefox, Safari, or Edge)
+
+### Full Setup (Frontend + Backend)
+
+For the complete experience with LLM-powered tutoring and progress tracking:
+
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/brfoley76/PromptingHumans.git
-   cd learning_module
+   cd PromptingHumans
+   ```
+
+2. **Start the backend server (in one terminal):**
+   ```bash
+   cd prompting_human_agent/backend
+   pip install -r requirements.txt
+   python3 -m src.main
+   ```
+   
+   The backend API will run on `http://localhost:8001`
+
+3. **Start the frontend server (in another terminal):**
+   ```bash
+   cd learning_module/web
+   python3 -m http.server 8000
+   ```
+
+4. **Open in browser:**
+   - Full experience: `http://localhost:8000`
+   - Dev mode (all exercises unlocked): `http://localhost:8000?dev`
+
+### Frontend Only (Standalone Mode)
+
+To run just the frontend without backend features:
+
+1. **Clone and navigate:**
+   ```bash
+   git clone https://github.com/brfoley76/PromptingHumans.git
+   cd PromptingHumans/learning_module
    ```
 
 2. **Start the development server:**
@@ -17,8 +54,13 @@ An interactive educational platform for 3rd-grade reading and spelling exercises
    ```
 
 3. **Open in browser:**
-   - Normal mode: `http://localhost:8000`
-   - Dev mode (all exercises unlocked): `http://localhost:8000?dev`
+   - `http://localhost:8000`
+   
+   **Note:** Without the backend, you won't have:
+   - LLM-powered tutor chat
+   - Cross-device progress sync
+   - Adaptive difficulty recommendations
+   - Performance analytics
 
 ## Features
 
